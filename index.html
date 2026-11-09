@@ -157,6 +157,9 @@ figcaption{padding:8px 2px 0;font-size:12px;color:var(--mu)}
 .pgs.trifold{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (min-width:640px) and (max-width:979px){.pgs.trifold{grid-template-columns:repeat(6,minmax(0,1fr))}}
 details.pst{margin:10px 0 2px;font-size:13px}details.pst summary{cursor:pointer;color:var(--muted,#667);padding:6px 0}details.pst textarea{width:100%;box-sizing:border-box;margin:6px 0;font:inherit}
+.lsz{display:flex;align-items:center;gap:10px;margin:10px 0 2px;font-size:13px}.lsz input{flex:1}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.hlp{padding:8px 16px}
+.mdl{max-width:min(640px,100%);padding:20px 22px}.mdl h2{margin:0 0 6px;font:500 24px var(--se)}.mdl h3{margin:0 0 10px;font:500 20px var(--se)}.mdl h4{margin:16px 0 4px;font-size:14px}.mdl p,.mdl li{font-size:14px;line-height:1.5;margin:4px 0}.mdl ul,.mdl ol{padding-left:20px;margin:4px 0}.mdl .row{margin-top:16px}
 
 </style>
 </head>
@@ -2370,15 +2373,30 @@ var qrcode = function() {
 
 </script>
 <script>
+/* Printed-bulletin language: section headings, fixed labels and date formats.
+   Add a language by copying one block below. Scripture inserted from the built-in
+   Berean Standard Bible stays in English; type or paste another translation into the section. */
+const LANGS={
+en:{n:"English",loc:"en-US",welcome:"Welcome",order:"Order of service",sermon:"Sermon",announce:"Announcements",events:"Coming up",prayer:"Prayer requests",giving:"Giving",connect:"Next steps",notes:"Notes",join:"Join us",scan:"Scan to visit",lords:"Lord’s Day",worship:"Sunday Worship"},
+es:{n:"Español",loc:"es-US",welcome:"Bienvenida",order:"Orden del servicio",sermon:"Sermón",announce:"Anuncios",events:"Próximos eventos",prayer:"Peticiones de oración",giving:"Ofrendas",connect:"Próximos pasos",notes:"Notas",join:"Acompáñenos",scan:"Escanee para visitar",lords:"Día del Señor",worship:"Culto dominical"},
+fr:{n:"Français",loc:"fr-FR",welcome:"Bienvenue",order:"Ordre du culte",sermon:"Prédication",announce:"Annonces",events:"À venir",prayer:"Sujets de prière",giving:"Offrandes",connect:"Prochaines étapes",notes:"Notes",join:"Nous rejoindre",scan:"Scannez pour visiter",lords:"Jour du Seigneur",worship:"Culte du dimanche"},
+pt:{n:"Português",loc:"pt-BR",welcome:"Boas-vindas",order:"Ordem do culto",sermon:"Sermão",announce:"Avisos",events:"Próximos eventos",prayer:"Pedidos de oração",giving:"Ofertas",connect:"Próximos passos",notes:"Anotações",join:"Visite-nos",scan:"Escaneie para visitar",lords:"Dia do Senhor",worship:"Culto de domingo"},
+de:{n:"Deutsch",loc:"de-DE",welcome:"Willkommen",order:"Ablauf des Gottesdienstes",sermon:"Predigt",announce:"Ankündigungen",events:"Termine",prayer:"Gebetsanliegen",giving:"Gaben",connect:"Nächste Schritte",notes:"Notizen",join:"Besuchen Sie uns",scan:"Scannen und besuchen",lords:"Tag des Herrn",worship:"Sonntagsgottesdienst"}
+};
+const lang=()=>LANGS[(typeof DB!="undefined"&&DB.l&&DB.l.lang)||"en"]||LANGS.en;
+const tr=k=>lang()[k]||LANGS.en[k]||k;
+const dloc=()=>lang().loc;
+
 /* ===== Orderly: data, text engine, layouts (all drawing is canvas, in points) ===== */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad2=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
 const addDays=(s,n)=>{const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)};
-const longDate=s=>new Date(s+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
-const midDate=s=>new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
-const shortDate=s=>new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});
+const PBH=()=>DB.l.pin!==false&&PH.has(DB.l.design)&&photoImg()?1:0;
+const longDate=s=>new Date(s+"T12:00:00").toLocaleDateString(dloc(),{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+const midDate=s=>new Date(s+"T12:00:00").toLocaleDateString(dloc(),{month:"long",day:"numeric",year:"numeric"});
+const shortDate=s=>new Date(s+"T12:00:00").toLocaleDateString(dloc(),{month:"short",day:"numeric"});
 const slug=s=>String(s||"bulletin").toLowerCase().replace(/[^\w]+/g,"-").replace(/^-|-$/g,"")||"bulletin";
 const uid=()=>Math.random().toString(36).slice(2,9);
 const nextSunday=()=>{const d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7));return iso(d)};
@@ -2477,31 +2495,31 @@ function verseRows(X,ps,sz,w,al){const f=X.body(sz),nf=X.lab(sz*.62),lh=sz*1.4,s
 /* ---------- Section rows ---------- */
 function secRows(X,sec,w,wk){const s=X.bs,lh=s*1.42,R=[];const body=X.body(s),mute=MUTE,al=sec.al||DB.l.align||"left",al2=al=="justify"?"left":al;
   const para=(t,o)=>T(t,Object.assign({font:body,color:INK,size:s,lh,w,align:al},o||{}));
-  if(sec.k=="welcome"){if(!sec.text.trim())return R;R.push(head(X,"Welcome",al),...para(sec.text),gap(s*.5))}
-  else if(sec.k=="order"){const it=sec.items.filter(i=>(i.l||"").trim());if(!it.length)return R;R.push(head(X,"Order of service",al));
+  if(sec.k=="welcome"){if(!sec.text.trim())return R;R.push(head(X,tr("welcome"),al),...para(sec.text),gap(s*.5))}
+  else if(sec.k=="order"){const it=sec.items.filter(i=>(i.l||"").trim());if(!it.length)return R;R.push(head(X,tr("order"),al));
     it.forEach(i=>R.push({h:lh*1.08,draw(c,x,y,w){const bl=y+lh*.5+s*.32,nf=X.body(s*.95,400,true),nt=(i.n||"").trim(),nw=nt?mw(nt,nf):0,lf=fit1(i.l.trim(),body,w-nw-(nt?16:0));
       c.textBaseline="alphabetic";c.textAlign="left";c.font=body;c.fillStyle=INK;
       if(al=="center"||al=="right"){const lt=i.l.trim(),sep="  ·  ",tot=mw(lt,body)+(nt?mw(sep,body)+nw:0);if(tot<=w){let px=al=="center"?x+(w-tot)/2:x+w-tot;c.fillText(lt,px,bl);if(nt){px+=mw(lt,body);c.fillStyle=mute;c.fillText(sep,px,bl);px+=mw(sep,body);c.font=nf;c.fillText(nt,px,bl)}return}}
       c.fillText(lf,x,bl);
       if(nt){c.font=nf;c.fillStyle=mute;c.textAlign="right";c.fillText(nt,x+w,bl);const lw=mw(lf,body);c.save();c.strokeStyle="#b9bec8";c.lineWidth=.7;c.setLineDash([.5,2.6]);c.beginPath();c.moveTo(x+lw+6,bl-1);c.lineTo(x+w-nw-6,bl-1);c.stroke();c.restore()}}}));R.push(gap(s*.5))}
-  else if(sec.k=="sermon"){const hasAny=sec.title||sec.ref||sec.speaker||sec.series;if(!hasAny)return R;R.push(head(X,"Sermon",al));
+  else if(sec.k=="sermon"){const hasAny=sec.title||sec.ref||sec.speaker||sec.series;if(!hasAny)return R;R.push(head(X,tr("sermon"),al));
     const kp=a=>{a.forEach(r=>r.keep=true);return a};
     if(sec.title)R.push(...kp(T(sec.title,{font:X.disp(s*1.75*X.ds),color:INK,size:s*1.75*X.ds,lh:s*1.75*X.ds*1.15,w,align:al2})));
     const sub=[sec.speaker,sec.series].filter(Boolean).join("  ·  ");if(sub)R.push(...kp(T(sub,{font:X.body(s*.98,400,true),color:mute,size:s,lh,w,align:al2})));
     const ps=passage(sec.ref);
     if(sec.ref.trim()){const g1=gap(s*.35);g1.keep=true;R.push(g1,...kp(T(ps?ps.ref:sec.ref,{font:X.lab(s*.86),color:X.acc,size:s*.86,lh,w,align:al2})));
       if(ps&&sec.showText){const g2=gap(s*.2);g2.keep=true;R.push(g2,...verseRows(X,ps,s*.98,w,al),...T("Berean Standard Bible (public domain)",{font:X.body(s*.72,400,true),color:mute,size:s*.72,lh:s*1.2,w,align:al2}))}}
-    if(sec.lines!=0){R.push(gap(s*.5));const nr=T("Notes",{font:X.lab(s*.72),color:mute,size:s*.72,lh:s*1.3,w});nr.forEach(r=>r.keep=true);R.push(...nr);const st=lh*1.35,n=sec.lines>0?sec.lines:3;R.push({h:st*n,fill:sec.lines<0,draw(c,x,y,w,hh){const cnt=sec.lines<0?Math.max(3,Math.floor((hh||st*n)/st)):n;c.strokeStyle=RULE;c.lineWidth=.6;for(let i=0;i<cnt;i++){c.beginPath();c.moveTo(x,y+lh*1.2+i*st);c.lineTo(x+w,y+lh*1.2+i*st);c.stroke()}}})}
+    if(sec.lines!=0){R.push(gap(s*.5));const nr=T(tr("notes"),{font:X.lab(s*.72),color:mute,size:s*.72,lh:s*1.3,w});nr.forEach(r=>r.keep=true);R.push(...nr);const st=lh*1.35,n=sec.lines>0?sec.lines:3;R.push({h:st*n,fill:sec.lines<0,draw(c,x,y,w,hh){const cnt=sec.lines<0?Math.max(3,Math.floor((hh||st*n)/st)):n;c.strokeStyle=RULE;c.lineWidth=.6;for(let i=0;i<cnt;i++){c.beginPath();c.moveTo(x,y+lh*1.2+i*st);c.lineTo(x+w,y+lh*1.2+i*st);c.stroke()}}})}
     R.push(gap(s*.6))}
-  else if(sec.k=="announce"){const it=sec.items.filter(i=>(i.h||"").trim()||(i.b||"").trim());if(!it.length)return R;R.push(head(X,"Announcements",al));
+  else if(sec.k=="announce"){const it=sec.items.filter(i=>(i.h||"").trim()||(i.b||"").trim());if(!it.length)return R;R.push(head(X,tr("announce"),al));
     it.forEach(i=>{if((i.h||"").trim())R.push(...T(i.h.trim(),{font:X.body(s,700),color:INK,size:s,lh,w,align:al2}));if((i.b||"").trim())R.push(...T(i.b.trim(),{font:body,color:INK,size:s,lh,w,align:al}));R.push(gap(s*.45))})}
-  else if(sec.k=="events"){const it=sec.items.filter(i=>(i.h||"").trim());if(!it.length)return R;R.push(head(X,"Coming up",al));const dw=Math.min(w*.3,Math.max(52,w*.26));
+  else if(sec.k=="events"){const it=sec.items.filter(i=>(i.h||"").trim());if(!it.length)return R;R.push(head(X,tr("events"),al));const dw=Math.min(w*.3,Math.max(52,w*.26));
     it.forEach(i=>{const hl=T(i.h.trim(),{font:X.body(s,700),color:INK,size:s,lh,w:w-dw-8}),bl=(i.b||"").trim()?T(i.b.trim(),{font:body,color:mute,size:s*.96,lh,w:w-dw-8}):[],ds=wrapT((i.d||"").trim(),X.lab(s*.82),dw);
       const rows=[...hl,...bl];rows.forEach((r,ix)=>{const o=r.draw,dl=ix==0?ds:[];r.draw=(c,x,y,ww)=>{o(c,x+dw+8,y,ww-dw-8);dl.forEach((l,j)=>{c.font=X.lab(s*.82);c.fillStyle=X.acc;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(l,x,y+lh*.5+s*.3+j*lh*.9)})}});
       if(ds.length>rows.length)for(let q=rows.length;q<ds.length;q++)rows.push({h:lh*.9,draw(){}});R.push(...rows,gap(s*.4))})}
-  else if(sec.k=="prayer"){const ls=sec.text.split("\n").map(x=>x.trim()).filter(Boolean);if(!ls.length)return R;R.push(head(X,"Prayer requests",al));const bul=al=="left"||al=="justify";
+  else if(sec.k=="prayer"){const ls=sec.text.split("\n").map(x=>x.trim()).filter(Boolean);if(!ls.length)return R;R.push(head(X,tr("prayer"),al));const bul=al=="left"||al=="justify";
     ls.forEach(l=>{const rs=T(l,{font:body,color:INK,size:s,lh,w,ind:bul?s*1.1:0,align:al});rs.forEach((r,i)=>{if(i==0&&bul){const o=r.draw;r.draw=(c,x,y,ww)=>{o(c,x,y,ww);c.fillStyle=X.acc;c.beginPath();c.arc(x+s*.32,y+lh*.5,s*.15,0,6.29);c.fill()}}});R.push(...rs)});R.push(gap(s*.5))}
-  else if(sec.k=="giving"||sec.k=="connect"||sec.k=="custom"){const h=sec.k=="custom"?(sec.h||"").trim():SECN[sec.k];if(!sec.text.trim())return R;if(h)R.push(head(X,h,al));R.push(...para(sec.text),gap(s*.5))}
+  else if(sec.k=="giving"||sec.k=="connect"||sec.k=="custom"){const h=sec.k=="custom"?(sec.h||"").trim():tr(sec.k);if(!sec.text.trim())return R;if(h)R.push(head(X,h,al));R.push(...para(sec.text),gap(s*.5))}
   return R}
 
 /* ---------- Pagination ---------- */
@@ -2519,7 +2537,8 @@ const webUrl=u=>{u=(u||"").trim();return u?(/^https?:/i.test(u)?u:"https://"+u):
 const webShow=u=>(u||"").trim().replace(/^https?:\/\//i,"").replace(/\/$/,"");
 let LOGO={src:"",img:null};
 function logoImg(){const s=DB.c.logo;if(!s){return null}if(LOGO.src!=s){LOGO={src:s,img:new Image()};LOGO.img.onload=()=>{if(typeof relayout=="function")relayout()};LOGO.img.src=s}return LOGO.img.complete&&LOGO.img.naturalWidth?LOGO.img:null}
-function drawLogo(c,x,y,bw,bh,align){const im=logoImg();if(!im)return 0;const r=Math.min(bw/im.naturalWidth,bh/im.naturalHeight),w=im.naturalWidth*r,h=im.naturalHeight*r;c.drawImage(im,align=="right"?x+bw-w:x,y+(bh-h)/2,w,h);return w}
+let LX=0;
+function drawLogo(c,x,y,bw,bh,align,o){o=o||{};const im=logoImg();LX=0;if(!im)return 0;const ls=Math.max(.5,Math.min(o.cap||2.4,parseFloat(DB.c.ls)||1)),nw=bw*ls,nh=bh*ls;LX=Math.max(0,nh-bh);if(o.top){}else y-=(nh-bh)/2;if(align=="right")x-=nw-bw;else if(align=="ctr")x-=(nw-bw)/2;const r=Math.min(nw/im.naturalWidth,nh/im.naturalHeight),w=im.naturalWidth*r,h=im.naturalHeight*r;c.drawImage(im,align=="right"?x+nw-w:align=="ctr"?x+(nw-w)/2:x,y+(o.top?0:(nh-h)/2),w,h);return w}
 const churchLine=()=>[DB.c.name,DB.c.addr,webShow(DB.c.web)].filter(Boolean).join("  ·  ");
 
 /* ---------- Layouts ---------- */
@@ -2527,7 +2546,7 @@ const SIZES={std:1,large:1.14};
 function styleOf(base){return ctxOf({font:DB.l.font,accent:DB.l.accent,design:DB.l.design,s:base})}
 function insideSecs(wk){return wk.secs.filter(s=>s.on&&!BACK[s.k])}
 function backSecs(wk){return wk.secs.filter(s=>s.on&&BACK[s.k])}
-function title4(wk){const se=wk.secs.find(s=>s.k=="sermon"&&s.on);return (wk.theme||"").trim()||(se&&se.title)||"Sunday Worship"}
+function title4(wk){const se=wk.secs.find(s=>s.k=="sermon"&&s.on);return (wk.theme||"").trim()||(se&&se.title)||tr("worship")}
 function timesList(){return DB.c.times.filter(t=>(t.d||"").trim()||(t.t||"").trim()||(t.n||"").trim())}
 
 function drawBack(pg,wk,s,warn,pre){const c=pg.c,Wp=pg.W,Hp=pg.H,nar=Wp<300,m=nar?26:36,X=styleOf(s),w=Wp-2*m;
@@ -2538,11 +2557,11 @@ function drawBack(pg,wk,s,warn,pre){const c=pg.c,Wp=pg.W,Hp=pg.H,nar=Wp<300,m=na
   const by=Hp-m-blockH+6;c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(m,by-8);c.lineTo(Wp-m,by-8);c.stroke();
   const qs=nar?64:86,url=webUrl(DB.c.web),showQ=!!url&&DB.c.qr!==false,tw=w-(showQ?qs+20:0);let ix=m;
   c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*X.ds);c.fillStyle=INK;c.fillText(DB.c.name,m,by+14);
-  let y=by+32;c.font=X.lab(7.5);const lw=drawLogo(c,Wp-m-60,by-2,60,34,"right");
-  labelTxt(c,"JOIN US",m,y,X.lab(7.2),DB.l.accent,1.4);y+=13;
+  let y=by+32;c.font=X.lab(7.5);const lw=drawLogo(c,Wp-m-60,by-2,60,34,"right",{cap:1.5});
+  labelTxt(c,tr("join").toUpperCase(),m,y,X.lab(7.2),DB.l.accent,1.4);y+=13;
   tl.slice(0,4).forEach(t=>{c.font=X.body(9.2*X.f.bs);c.fillStyle=INK;c.fillText(fit1([t.d,t.t].filter(Boolean).join("  "),X.body(9.2*X.f.bs),tw)+(t.n?"  ·  "+t.n:""),m,y);y+=12.2});
   y+=3;[DB.c.addr,DB.c.phone,DB.c.email,webShow(DB.c.web)].filter(Boolean).forEach(l=>{c.font=X.body(8.8*X.f.bs);c.fillStyle=MUTE;c.fillText(fit1(l,X.body(8.8*X.f.bs),tw),m,y);y+=11.4});
-  if(showQ){qrDraw(c,url,Wp-m-qs,Hp-m-qs-12,qs,INK);c.font=X.lab(6.4);c.fillStyle=MUTE;c.textAlign="right";try{c.letterSpacing="1px"}catch(e){}c.fillText("SCAN TO VISIT",Wp-m,Hp-m+2);try{c.letterSpacing="0px"}catch(e){}c.textAlign="left"}}
+  if(showQ){qrDraw(c,url,Wp-m-qs,Hp-m-qs-12,qs,INK);c.font=X.lab(6.4);c.fillStyle=MUTE;c.textAlign="right";try{c.letterSpacing="1px"}catch(e){}c.fillText(tr("scan").toUpperCase(),Wp-m,Hp-m+2);try{c.letterSpacing="0px"}catch(e){}c.textAlign="left"}}
 function folio(pg,txt,right){const c=pg.c,X=styleOf(10);c.font=X.lab(6.8);c.fillStyle="#8a909b";c.textBaseline="alphabetic";c.textAlign=right?"right":"left";try{c.letterSpacing="1px"}catch(e){}c.fillText(txt.toUpperCase(),right?pg.W-34:34,pg.H-24);try{c.letterSpacing="0px"}catch(e){}c.textAlign="left"}
 
 
@@ -2557,8 +2576,8 @@ function packGroups(groups,hs){let cur=0,y=0,fail=false;const out=hs.map(()=>[])
 function packLoose(groups,hs,backIdx){const rem=hs.slice(),out=hs.map(()=>[]);let fail=false;
   groups.forEach(g=>{let idx=-1;const c=g.back&&backIdx>=0?[backIdx]:hs.map((_,i)=>i);for(const i of c)if(rem[i]>=g.H-g.T-.01){idx=i;break}
     if(idx<0){fail=true;idx=c[c.length-1]}out[idx].push(g);rem[idx]-=g.H});return{out,fail}}
-function buildBooklet(k,wk,warn){const ser=sermonOf(wk),Wp=396,Hp=612,m=36,w=Wp-2*m,base=10*SIZES[DB.l.size],regH=Hp-2*m-8,backH=Hp-2*m-160,ins=insideSecs(wk).filter(s=>s!==ser),bks=backSecs(wk);
-  const mk=(X,secs,back)=>secs.map(sec=>{const rows=secRows(X,sec,w,wk);return grp(rows,{back})}).filter(g=>g.rows.length),hs=ser?[regH,backH]:[regH,regH,backH],one=h=>{let u=0;return()=>u++?null:{h}};
+function buildBooklet(k,wk,warn){const ser=sermonOf(wk),Wp=396,Hp=612,m=36,w=Wp-2*m,base=10*SIZES[DB.l.size],regH=Hp-2*m-8,backH=Hp-2*m-160,ins=insideSecs(wk).filter(s=>s!==ser),bks=backSecs(wk),PB0=PBH()?98-m:0;
+  const mk=(X,secs,back)=>secs.map(sec=>{const rows=secRows(X,sec,w,wk);return grp(rows,{back})}).filter(g=>g.rows.length),hs=(ser?[regH,backH]:[regH,regH,backH]).map((x,i)=>i?x:x-PB0),one=h=>{let u=0;return()=>u++?null:{h}};
   let s=base,P=null,xtra=false;const groupsAt=f=>{const X=styleOf(base*f);return mk(X,ins,false).concat(mk(X,bks,true))};
   for(const f of [1,.95,.9,.86,.82,.78,.74,.7]){s=base*f;P=packGroups(groupsAt(f),hs);if(!P.fail)break}
   let sRows=[];if(ser)for(const f of [1,.94,.88,.82,.76,.7]){sRows=secRows(styleOf(base*f),ser,w,wk);if(!flow(sRows,one(regH),true))break}
@@ -2567,19 +2586,19 @@ function buildBooklet(k,wk,warn){const ser=sermonOf(wk),Wp=396,Hp=612,m=36,w=Wp-
     for(const f of [.7,.66,.62,.58]){s=base*f;P=packLoose(groupsAt(f),hs2,hs.length-1);if(!P.fail)break}
     xtra=!!(ser&&P.out[hs.length]&&P.out[hs.length].length)}
   const cover=mkPage(Wp,Hp,k),in1=mkPage(Wp,Hp,k),in2=mkPage(Wp,Hp,k),back=mkPage(Wp,Hp,k);
-  drawCover(cover,wk,{bold:DB.l.cover=="bold"});decor(in1,"in");decor(in2,"in");decor(back,"back");
+  drawCover(cover,wk,{bold:DB.l.cover=="bold"});decor(in1,"in");decor(in2,"in");decor(back,"back");if(PB0)photoBand(in1.c,0,0,Wp,84);
   const pgs=ser?[in1,back]:[in1,in2,back],rowsOn=i=>P.out[i].flatMap(g=>g.rows);
-  pgs.forEach((pg,i)=>{if(pg===back)return;const l=flow(rowsOn(i),one1(pg.c,m,m,w,regH));if(l)warn.push(l)});
+  pgs.forEach((pg,i)=>{if(pg===back)return;const l=flow(rowsOn(i),one1(pg.c,m,i?m:m+PB0,w,i?regH:regH-PB0));if(l)warn.push(l)});
   if(ser){const l=flow(xtra?sMin.concat(P.out[hs.length].flatMap(g=>g.rows)):sRows,one1(in2.c,m,m,w,regH));if(l)warn.push(l)}
-  folio(in1,DB.c.name+" · "+shortDate(wk.date));folio(in2,"Lord’s Day · "+shortDate(wk.date),true);
+  folio(in1,DB.c.name+" · "+shortDate(wk.date));folio(in2,tr("lords")+" · "+shortDate(wk.date),true);
   drawBack(back,wk,s,warn,rowsOn(pgs.length-1));
   return{kind:"booklet",pages:[{...cover,label:"Cover"},{...in1,label:"Inside left"},{...in2,label:ser?"Sermon":"Inside right"},{...back,label:"Back"}],W:Wp,H:Hp}}
 const one1=(c,x,y,w,h)=>{let u=0;return()=>u++?null:{c,x,y,w,h}};
 
 
 
-function buildTrifold(k,wk,warn){const ser=sermonOf(wk),Wp=264,Hp=612,m=26,w=Wp-2*m,base=9*SIZES[DB.l.size],regH=Hp-2*m-8,backH=Hp-2*m-148,ins=insideSecs(wk).filter(s=>s!==ser),bks=backSecs(wk);
-  const mk=(X,secs,back)=>secs.map(sec=>{const rows=secRows(X,sec,w,wk);return grp(rows,{back})}).filter(g=>g.rows.length),hs=ser?[regH,regH,regH,backH]:[regH,regH,regH,regH,backH],one=h=>{let u=0;return()=>u++?null:{h}};
+function buildTrifold(k,wk,warn){const ser=sermonOf(wk),Wp=264,Hp=612,m=26,w=Wp-2*m,base=9*SIZES[DB.l.size],regH=Hp-2*m-8,backH=Hp-2*m-148,ins=insideSecs(wk).filter(s=>s!==ser),bks=backSecs(wk),PB0=PBH()?82-m:0;
+  const mk=(X,secs,back)=>secs.map(sec=>{const rows=secRows(X,sec,w,wk);return grp(rows,{back})}).filter(g=>g.rows.length),hs=(ser?[regH,regH,regH,backH]:[regH,regH,regH,regH,backH]).map((x,i)=>i?x:x-PB0),one=h=>{let u=0;return()=>u++?null:{h}};
   let s=base,P=null,xtra=false;const groupsAt=f=>{const X=styleOf(base*f);return mk(X,ins,false).concat(mk(X,bks,true))};
   for(const f of [1,.95,.9,.86,.82,.78,.74,.7]){s=base*f;P=packGroups(groupsAt(f),hs);if(!P.fail)break}
   let sRows=[];if(ser)for(const f of [1,.94,.88,.82,.76,.7]){sRows=secRows(styleOf(base*f),ser,w,wk);if(!flow(sRows,one(regH),true))break}
@@ -2588,17 +2607,17 @@ function buildTrifold(k,wk,warn){const ser=sermonOf(wk),Wp=264,Hp=612,m=26,w=Wp-
     for(const f of [.7,.66,.62,.58]){s=base*f;P=packLoose(groupsAt(f),hs2,hs.length-1);if(!P.fail)break}
     xtra=!!(ser&&P.out[hs.length]&&P.out[hs.length].length)}
   const cover=mkPage(Wp,Hp,k),in1=mkPage(Wp,Hp,k),in2=mkPage(Wp,Hp,k),in3=mkPage(Wp,Hp,k),flap=mkPage(Wp,Hp,k),back=mkPage(Wp,Hp,k);
-  drawCover(cover,wk,{bold:DB.l.cover=="bold"});[in1,in2,in3,flap].forEach(p=>decor(p,"in"));decor(back,"back");
+  drawCover(cover,wk,{bold:DB.l.cover=="bold"});[in1,in2,in3,flap].forEach(p=>decor(p,"in"));decor(back,"back");if(PB0)photoBand(in1.c,0,0,Wp,70);
   const pgs=ser?[in1,in3,flap,back]:[in1,in2,in3,flap,back],rowsOn=i=>P.out[i].flatMap(g=>g.rows);
-  pgs.forEach((pg,i)=>{if(pg===back)return;const l=flow(rowsOn(i),one1(pg.c,m,m,w,regH));if(l)warn.push(l)});
+  pgs.forEach((pg,i)=>{if(pg===back)return;const l=flow(rowsOn(i),one1(pg.c,m,i?m:m+PB0,w,i?regH:regH-PB0));if(l)warn.push(l)});
   if(ser){const l=flow(xtra?sMin.concat(P.out[hs.length].flatMap(g=>g.rows)):sRows,one1(in2.c,m,m,w,regH));if(l)warn.push(l)}
-  pgs.forEach((pg,i)=>{if(pg===back||rowsOn(i).length)return;const c=pg.c,X=styleOf(10);c.save();c.font=X.lab(7);c.fillStyle=MUTE;try{c.letterSpacing="1.5px"}catch(e){}c.fillText("NOTES",m,m+10);try{c.letterSpacing="0px"}catch(e){}c.strokeStyle="#d5d8de";c.lineWidth=.6;for(let y=m+34;y<Hp-m-6;y+=22){c.beginPath();c.moveTo(m,y);c.lineTo(m+w,y);c.stroke()}c.restore()});
+  pgs.forEach((pg,i)=>{if(pg===back||rowsOn(i).length)return;const c=pg.c,X=styleOf(10);c.save();c.font=X.lab(7);c.fillStyle=MUTE;try{c.letterSpacing="1.5px"}catch(e){}c.fillText(tr("notes").toUpperCase(),m,m+10);try{c.letterSpacing="0px"}catch(e){}c.strokeStyle="#d5d8de";c.lineWidth=.6;for(let y=m+34;y<Hp-m-6;y+=22){c.beginPath();c.moveTo(m,y);c.lineTo(m+w,y);c.stroke()}c.restore()});
   folio(in1,shortDate(wk.date));folio(in3,shortDate(wk.date),true);
   drawBack(back,wk,s,warn,rowsOn(pgs.length-1));
   return{kind:"trifold",pages:[{...cover,label:"Cover"},{...in1,label:"Inside left"},{...in2,label:ser?"Sermon":"Inside center"},{...in3,label:"Inside right"},{...flap,label:"Flap"},{...back,label:"Back"}],W:Wp,H:Hp}}
 
 const SIDE={announce:1,events:1,prayer:1,giving:1,connect:1};
-function buildPage(k,wk,warn){const ser=sermonOf(wk),Wp=612,Hp=792,m=44,cg=26,cw=(Wp-2*m-cg)/2,base=9.6*SIZES[DB.l.size],sty=DB.l.pstyle||"columns",hero=sty=="hero",HH=210,topH=hero?HH-m+22:84,foot=34,oSecs=wk.secs.filter(s=>s.on&&s!==ser),maxP=ser?3:4;
+function buildPage(k,wk,warn){const ser=sermonOf(wk),Wp=612,Hp=792,m=44,cg=26,cw=(Wp-2*m-cg)/2,base=9.6*SIZES[DB.l.size],sty=DB.l.pstyle||"columns",hero=sty=="hero",bnd=!hero&&PBH()?92:0,HH=210,topH=hero?HH-m+22:84+bnd,foot=34,oSecs=wk.secs.filter(s=>s.on&&s!==ser),maxP=ser?3:4;
   const sbw=176,sbg=22,mainW=Wp-2*m-sbw-sbg,sbIn=sbw-28;let sb=null;
   if(sty=="sidebar"&&oSecs.length){const mSecs=oSecs.filter(s=>!SIDE[s.k]),sSecs=oSecs.filter(s=>SIDE[s.k]),y0=m+topH,hh=Hp-y0-m-foot+10;
     for(const f of [1,.95,.91,.87,.83,.8]){const X=styleOf(base*f),mr=[],sr=[];mSecs.forEach(x=>mr.push(...secRows(X,x,mainW,wk)));sSecs.forEach(x=>sr.push(...secRows(X,x,sbIn,wk)));let u1=0,u2=0;if(!flow(mr,()=>u1++?null:{h:hh},true)&&!flow(sr,()=>u2++?null:{h:hh-28},true)){sb={mr,sr,y0,hh,f};break}}}
@@ -2610,10 +2629,10 @@ function buildPage(k,wk,warn){const ser=sermonOf(wk),Wp=612,Hp=792,m=44,cg=26,cw
     if(!done)for(const f of [.7,.66,.62,.58]){P=packLoose(mk(base*f),hsOf(maxP),-1);nO=maxP;if(!P.fail)break}}
   const sw=Math.min(Wp-2*m,430),sx=(Wp-sw)/2,sy=probe.length?m:m+topH,sh=Hp-sy-m-foot+10;let sRows=[];
   if(ser)for(const f of [1.2,1.12,1.05,1,.94,.88,.82,.76,.7]){sRows=secRows(styleOf(base*f),ser,sw,wk);let u=0;if(!flow(sRows,()=>u++?null:{h:sh},true))break}
-  const pgs=[];for(let i=0;i<nO+1;i++){const pp=mkPage(Wp,Hp,k);if(!(hero&&i==0))decor(pp,"page");pgs.push(pp)}
+  const pgs=[];for(let i=0;i<nO+1;i++){const pp=mkPage(Wp,Hp,k);if(!(hero&&i==0))decor(pp,"page");pgs.push(pp)}if(bnd)photoBand(pgs[0].c,m,m+84,Wp-2*m,80);
   let last=-1;if(sb){last=0;const c0=pgs[0].c,px=Wp-m-sbw,ph=sb.hh;c0.save();c0.fillStyle=tint(DB.l.accent,.07);c0.beginPath();if(c0.roundRect)c0.roundRect(px,sb.y0,sbw,ph,6);else c0.rect(px,sb.y0,sbw,ph);c0.fill();c0.restore();
     const l1=flow(sb.mr,one1(c0,m,sb.y0,mainW,sb.hh));if(l1)warn.push(l1);const l2=flow(sb.sr,one1(c0,px+14,sb.y0+14,sbIn,ph-28));if(l2)warn.push(l2);
-    const used=sumH(sb.sr),url=webUrl(DB.c.web);if(url&&DB.c.qr!==false&&ph-28-used>108){const q=74;qrDraw(c0,url,px+(sbw-q)/2,sb.y0+ph-14-q-12,q,INK);const XX=styleOf(10);c0.font=XX.lab(6.2);c0.fillStyle=MUTE;c0.textAlign="center";try{c0.letterSpacing="1px"}catch(e2){}c0.fillText("SCAN TO VISIT",px+sbw/2,sb.y0+ph-12);try{c0.letterSpacing="0px"}catch(e2){}c0.textAlign="left"}}
+    const used=sumH(sb.sr),url=webUrl(DB.c.web);if(url&&DB.c.qr!==false&&ph-28-used>108){const q=74;qrDraw(c0,url,px+(sbw-q)/2,sb.y0+ph-14-q-12,q,INK);const XX=styleOf(10);c0.font=XX.lab(6.2);c0.fillStyle=MUTE;c0.textAlign="center";try{c0.letterSpacing="1px"}catch(e2){}c0.fillText(tr("scan").toUpperCase(),px+sbw/2,sb.y0+ph-12);try{c0.letterSpacing="0px"}catch(e2){}c0.textAlign="left"}}
   P.out.forEach((gs,i)=>{if(!gs.length)return;const pn=Math.floor(i/2);last=Math.max(last,pn);const l=flow(gs.flatMap(g=>g.rows),one1(pgs[pn].c,m+(i%2)*(cw+cg),pn==0?m+topH:m,cw,colH(pn)));if(l)warn.push(l)});
   const nUsed=last+1,sp=pgs[nUsed];let outPg=pgs.slice(0,nUsed);if(ser){const ls=flow(sRows,one1(sp.c,sx,sy,sw,sh));if(ls)warn.push(ls);outPg.push(sp)}
   if(!outPg.length)outPg=[pgs[0]];const X=styleOf(10);if(hero)heroHeader(outPg[0].c,wk,Wp,m,HH);else pageHeader(outPg[0].c,wk,Wp,m);
@@ -2630,7 +2649,7 @@ function buildDigital(k,wk,warn){const Wp=540,Hp=675,m=42,base=19.5*SIZES[DB.l.s
     rows.forEach((r,i)=>{let need=r.h,j=i;while(rows[j].keep&&rows[j+1]){j++;need+=rows[j].h}if(y+need>rh&&y>0)newS();if(y==0&&r.blank)return;const hh=r.fill?Math.max(r.h,rh-y):r.h;if(r.draw)r.draw(cur.c,m,96+y,cw,hh);y+=hh});
     y+=X.bs*.9;if(isS)cur=null});
   // closing
-  const cl=mk(false);body.push(cl);{const c=cl.c;let y=96;const w=Wp-2*m;const rows=[head(X,"Join us")];timesList().forEach(t=>rows.push(...T([t.d,t.t].filter(Boolean).join("  ")+(t.n?"  ·  "+t.n:""),{font:X.body(X.bs),color:INK,size:X.bs,lh:X.bs*1.5,w})));rows.push(gap(X.bs*.6));[DB.c.addr,DB.c.phone,DB.c.email,webShow(DB.c.web)].filter(Boolean).forEach(l=>rows.push(...T(l,{font:X.body(X.bs*.95),color:MUTE,size:X.bs,lh:X.bs*1.5,w})));
+  const cl=mk(false);body.push(cl);{const c=cl.c;let y=96;const w=Wp-2*m;const rows=[head(X,tr("join"))];timesList().forEach(t=>rows.push(...T([t.d,t.t].filter(Boolean).join("  ")+(t.n?"  ·  "+t.n:""),{font:X.body(X.bs),color:INK,size:X.bs,lh:X.bs*1.5,w})));rows.push(gap(X.bs*.6));[DB.c.addr,DB.c.phone,DB.c.email,webShow(DB.c.web)].filter(Boolean).forEach(l=>rows.push(...T(l,{font:X.body(X.bs*.95),color:MUTE,size:X.bs,lh:X.bs*1.5,w})));
     let u=0;flow(rows,()=>u++?null:{c,x:m,y:96,w,h:260});const url=webUrl(DB.c.web);if(url&&DB.c.qr!==false){qrDraw(c,url,m,Hp-m-150-30,130,INK)}}
   body.forEach((p,i)=>{const c=p.c;slideHeader(c,wk,Wp,Hp,m);c.font=styleOf(10).lab(8);c.fillStyle="#8a909b";c.textAlign="right";c.textBaseline="alphabetic";c.fillText((i+2)+" / "+(body.length+1),Wp-m,Hp-m+10);c.textAlign="left"});
   return{kind:"digital",pages:pgs.map((p,i)=>({...p,label:i==0?"Cover":i==pgs.length-1?"Closing":"Slide "+(i+1)})),W:Wp,H:Hp}}
@@ -2770,6 +2789,7 @@ let PHOTO={src:"",img:null};
 function photoImg(){const s=DB.l.photo;if(!s)return null;if(PHOTO.src!=s){PHOTO={src:s,img:new Image()};PHOTO.img.onload=()=>{if(typeof relayout=="function"){relayout();if(typeof thumbs=="function")thumbs()}};PHOTO.img.src=s}return PHOTO.img.complete&&PHOTO.img.naturalWidth?PHOTO.img:null}
 function drawPhoto(c,x,y,w,h){const im=photoImg();if(!im)return false;const r=Math.max(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*r,ih=im.naturalHeight*r;c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih);treat(c,x,y,w,h);c.restore();return true}
 const PH=new Set(["photo","bold","cross","arch"]),PT=[["natural","Natural"],["duotone","Duotone"],["mono","Black & white"],["warm","Warm"]];
+function photoBand(c,x,y,w,h){if(!drawPhoto(c,x,y,w,h))return;const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,"rgba(0,0,0,.04)");g.addColorStop(1,"rgba(0,0,0,.3)");c.fillStyle=g;c.fillRect(x,y,w,h);c.fillStyle=DB.l.accent;c.fillRect(x,y+h,w,2)}
 function treat(c,x,y,w,h){const t=DB.l.pt||"natural";if(t=="natural")return;const hs=hslOf(DB.l.accent);const gray=()=>{c.globalCompositeOperation="saturation";c.fillStyle="#808080";c.fillRect(x,y,w,h)};
   if(t=="mono"){gray();c.globalCompositeOperation="source-over"}
   else if(t=="duotone"){gray();c.globalCompositeOperation="multiply";c.fillStyle=hsl(hs[0],Math.min(100,hs[1]+10),Math.min(70,hs[2]+18),1);c.fillRect(x,y,w,h);c.globalCompositeOperation="screen";c.fillStyle=hsl(hs[0],hs[1],14,1);c.fillRect(x,y,w,h);c.globalCompositeOperation="source-over"}
@@ -2788,11 +2808,11 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   const dateL=longDate(wk.date),fit=(max,min,w,ml)=>{let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
   let tb=0;const hasQ=!!coverQuote(),ill=DB.l.ill&&DB.l.ill!="none"?DB.l.ill:null;const dispT=(L,sz,x,y,col,al)=>{tb=Math.max(tb,y+(L.length-1)*sz*1.1+sz*.25);c.font=X.disp(sz);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";L.forEach((l,i)=>c.fillText(l,x,y+i*sz*1.1));c.textAlign="left"};
   const ital=(t,sz,x,y,col,al)=>{if(y<Hp*.88)tb=Math.max(tb,y+sz*.3);c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";c.fillText(t,x,y);c.textAlign="left"};
-  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left");const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
+  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left",{cap:1.8});const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
   c.fillStyle="#fff";c.fillRect(0,0,Wp,Hp);
   if(d=="traditional"){const cx=Wp/2,fr=m*.5;c.strokeStyle=acc;c.lineWidth=1.5*u;c.strokeRect(fr,fr,Wp-2*fr,Hp-2*fr);c.lineWidth=.5*u;c.strokeRect(fr+5*u,fr+5*u,Wp-2*fr-10*u,Hp-2*fr-10*u);
     let y=m+22*u;if(ill)drawIll(c,ill,cx,y,17*u,acc,1.1*u);else{c.strokeStyle=acc;c.lineWidth=1.3*u;c.beginPath();c.moveTo(cx,y-12*u);c.lineTo(cx,y+14*u);c.moveTo(cx-8*u,y-3*u);c.lineTo(cx+8*u,y-3*u);c.stroke()}
-    y+=40*u;const lw=drawLogo(c,cx-45*u,y-6*u,90*u,36*u,"left");if(lw){y+=40*u}
+    y+=40*u;const room=Hp*.4-60*u-8*u-(y-6*u)-34*u,lw=drawLogo(c,cx-45*u,y-6*u,90*u,36*u,"ctr",{top:1,cap:Math.max(1,room/(36*u))});if(lw){y+=40*u+LX+(LX?6*u:0)}
     labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(9*u),acc,2.2*u);y+=14*u;c.strokeStyle=RULE;c.lineWidth=.6*u;c.beginPath();c.moveTo(cx-24*u,y);c.lineTo(cx+24*u,y);c.stroke();
     labelC(c,dateL.toUpperCase(),cx,Hp*.4-60*u,X.lab(8*u),MUTE,1.6*u);
     const f=fit(34*u*X.ds,20*u,Wp-2*m-24*u,4);dispT(f.L,f.sz,cx,Hp*.4,INK,"center");if(subL)ital(subL,12*u*X.f.bs,cx,Hp*.4+f.L.length*f.sz*1.1+14*u,MUTE,"center");
@@ -2805,8 +2825,8 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   else if(d=="photo"){drawPhoto(c,0,0,Wp,Hp);const g=c.createLinearGradient(0,0,0,Hp);g.addColorStop(0,"rgba(0,0,0,.35)");g.addColorStop(.45,"rgba(0,0,0,.12)");g.addColorStop(1,"rgba(0,0,0,.82)");c.fillStyle=g;c.fillRect(0,0,Wp,Hp);
     labelTxt(c,dateL.toUpperCase(),m,m+8*u,X.lab(8.5*u),"rgba(255,255,255,.9)",1.8*u);
     const f=fit(42*u*X.ds,24*u,Wp-2*m,4),by=Hp-m-62*u;dispT(f.L,f.sz,m,by-(f.L.length-1)*f.sz*1.1-(subL?36*u:0),"#fff");if(subL)ital(subL,12*u*X.f.bs,m,by-8*u,"rgba(255,255,255,.88)");
-    c.fillStyle="rgba(255,255,255,.5)";c.fillRect(m,Hp-m-44*u,Wp-2*m,.6*u);const lw=drawLogo(c,m,Hp-m-36*u,90*u,34*u,"left");c.font=X.disp(14*u*X.ds);c.fillStyle="#fff";c.textAlign="left";c.fillText(DB.c.name,m+(lw?lw+10*u:0),Hp-m-10*u)}
-  else if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate()),mon=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"}),wd=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
+    c.fillStyle="rgba(255,255,255,.5)";c.fillRect(m,Hp-m-44*u,Wp-2*m,.6*u);const lw=drawLogo(c,m,Hp-m-36*u,90*u,34*u,"left",{cap:1.7});c.font=X.disp(14*u*X.ds);c.fillStyle="#fff";c.textAlign="left";c.fillText(DB.c.name,m+(lw?lw+10*u:0),Hp-m-10*u)}
+  else if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate()),mon=new Date(wk.date+"T12:00:00").toLocaleDateString(dloc(),{month:"long",year:"numeric"}),wd=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
     if(o.bold)coverArt(c,0,0,Wp,Hp,d);const ink=o.bold?"#fff":INK,mu=o.bold?"rgba(255,255,255,.78)":MUTE,ac=o.bold?"#fff":acc;
     c.font=X.disp(150*u*X.ds);c.fillStyle=ac;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(day,m-4*u,m+118*u*X.ds);const dw=c.measureText(day).width;
     labelTxt(c,wd.toUpperCase(),m+dw+14*u,m+62*u,X.lab(8.5*u),mu,1.8*u);labelTxt(c,mon.toUpperCase(),m+dw+14*u,m+78*u,X.lab(8.5*u),mu,1.8*u);
@@ -2826,7 +2846,7 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
     labelC(c,dateL.toUpperCase(),cx,bh+34*u,X.lab(8*u),MUTE,1.8*u);const f=fit(32*u*X.ds,20*u,Wp-2*m,3);dispT(f.L,f.sz,cx,bh+34*u+14*u+f.sz*.8,INK,"center");
     if(subL)ital(subL,11.5*u*X.f.bs,cx,bh+34*u+14*u+f.sz*.8+f.L.length*f.sz*1.1+2*u,MUTE,"center");labelC(c,DB.c.name.toUpperCase(),cx,Hp-m-2*u,X.lab(8*u),acc,2*u)}
   else if(d=="card"){coverArt(c,0,0,Wp,Hp,d,{light:true});const cx=Wp/2,p=m*.5,cw=Wp-2*p,ch=Hp-2*p;c.save();c.shadowColor="rgba(0,0,0,.12)";c.shadowBlur=16*u;c.shadowOffsetY=4*u;c.fillStyle="#fff";c.fillRect(p,p,cw,ch);c.restore();c.strokeStyle=acc;c.lineWidth=.7*u;c.strokeRect(p+8*u,p+8*u,cw-16*u,ch-16*u);
-    let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"left");if(lw)y+=26*u;else if(ill)drawIll(c,ill,cx,p+34*u,15*u,acc,1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
+    let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"ctr",{top:1});if(lw)y+=26*u+LX*1.3+(LX?14*u:0);else if(ill)drawIll(c,ill,cx,p+34*u,15*u,acc,1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
     const cy=ch*(hasQ?.34:.42)+p*.5;labelC(c,dateL.toUpperCase(),cx,cy,X.lab(8*u),MUTE,1.6*u);const f=fit(32*u*X.ds,20*u,cw-60*u,4);dispT(f.L,f.sz,cx,cy+36*u,INK,"center");
     const sy=cy+36*u+f.L.length*f.sz*1.1+6*u;c.fillStyle=acc;c.beginPath();c.arc(cx,sy+4*u,2.2*u,0,6.3);c.fill();if(subL)ital(subL,11.5*u*X.f.bs,cx,sy+26*u,MUTE,"center");if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,cx,Hp-p-26*u,MUTE,"center")}
   else{const bold=o.bold,ink=bold?"#fff":INK,sub=bold?"rgba(255,255,255,.78)":MUTE;if(bold)coverArt(c,0,0,Wp,Hp,d);
@@ -2852,18 +2872,18 @@ function headBase(X,txt){const sz=X.s,d=X.design;
   return{h:sz*3.1,keep:true,draw(c,x,y,w){const bl=y+sz*2.05,t=txt.toUpperCase(),wd=labelTxt(c,t,x,bl,X.lab(sz*.72),X.acc,1.4);c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(x+wd+8,bl-sz*.28);c.lineTo(x+w,bl-sz*.28);c.stroke()}}}
 /* letter-page masthead */
 function pageHeader(c,wk,Wp,m){const X=styleOf(10),d=DB.l.design,acc=DB.l.accent,th=(wk.theme||"").trim(),dl=longDate(wk.date);c.textBaseline="alphabetic";
-  if(HC.has(d)){const cx=Wp/2,lw=drawLogo(c,cx-30,m-12,60,28,"left");c.textAlign="center";c.fillStyle=INK;c.font=X.disp(22*X.ds);c.fillText(DB.c.name,cx,m+(lw?28:14));labelC(c,dl.toUpperCase(),cx,m+(lw?42:30),X.lab(7.6),MUTE,1.4);if(th){c.textAlign="center";c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,cx,m+(lw?56:46))}
+  if(HC.has(d)){const cx=Wp/2,lw=drawLogo(c,cx-30,m-12,60,28,"ctr",{cap:1.3});c.textAlign="center";c.fillStyle=INK;c.font=X.disp(22*X.ds);c.fillText(DB.c.name,cx,m+(lw?28:14));labelC(c,dl.toUpperCase(),cx,m+(lw?42:30),X.lab(7.6),MUTE,1.4);if(th){c.textAlign="center";c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,cx,m+(lw?56:46))}
     c.fillStyle=acc;c.fillRect(m,m+62,Wp-2*m,1.6);c.fillRect(m,m+66,Wp-2*m,.5);c.textAlign="left";return}
   if(HB.has(d)){const bh=m+66;c.fillStyle=acc;c.fillRect(0,0,Wp,bh);if(d=="photo"&&photoImg()){drawPhoto(c,0,0,Wp,bh);c.fillStyle="rgba(0,0,0,.45)";c.fillRect(0,0,Wp,bh)}
-    const lw=drawLogo(c,m,m-8,80,40,"left"),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle="#fff";c.font=X.disp(22*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),"rgba(255,255,255,.85)",1.4);if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle="#fff";c.fillText(th,tx,m+50)}return}
+    const lw=drawLogo(c,m,m-8,80,40,"left",{cap:1.4}),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle="#fff";c.font=X.disp(22*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),"rgba(255,255,255,.85)",1.4);if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle="#fff";c.fillText(th,tx,m+50)}return}
   if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate());c.textAlign="left";c.font=X.disp(58*X.ds);c.fillStyle=acc;c.fillText(day,m-2,m+44);const dw=c.measureText(day).width;c.fillStyle=INK;c.font=X.disp(15*X.ds);c.fillText(DB.c.name,m+dw+14,m+20);
     labelTxt(c,dl.toUpperCase(),m+dw+14,m+36,X.lab(7.4),MUTE,1.4);if(th){c.font=X.body(10.5*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,m+dw+14,m+50)}c.fillStyle=RULE;c.fillRect(m,m+62,Wp-2*m,.7);return}
-  const lw=drawLogo(c,m,m-4,90,44,"left"),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle=INK;c.font=X.disp(20*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),MUTE,1.4);
+  const lw=drawLogo(c,m,m-4,90,44,"left",{cap:1.4}),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle=INK;c.font=X.disp(20*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),MUTE,1.4);
   if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,tx,m+48)}c.fillStyle=acc;c.fillRect(m,m+60,Wp-2*m,1.6);if(d=="split")c.fillRect(m-16,m-6,3.6,58)}
 /* letter-page hero banner */
 function heroHeader(c,wk,Wp,m,H){const X=styleOf(10),acc=DB.l.accent,u=Wp/396,se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
   if(photoImg()){drawPhoto(c,0,0,Wp,H);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(0,0,0,.3)");g.addColorStop(1,"rgba(0,0,0,.7)");c.fillStyle=g;c.fillRect(0,0,Wp,H)}else coverArt(c,0,0,Wp,H,"bold");
-  const lw=drawLogo(c,m,m-10,70,34,"left"),tx=m+(lw?lw+10:0);c.textAlign="left";c.textBaseline="alphabetic";c.fillStyle="#fff";c.font=X.disp(15*X.ds);c.fillText(DB.c.name,tx,m+8);labelTxt(c,longDate(wk.date).toUpperCase(),tx,m+22,X.lab(7.4),"rgba(255,255,255,.85)",1.5);
+  const lw=drawLogo(c,m,m-10,70,34,"left",{cap:1.4}),tx=m+(lw?lw+10:0);c.textAlign="left";c.textBaseline="alphabetic";c.fillStyle="#fff";c.font=X.disp(15*X.ds);c.fillText(DB.c.name,tx,m+8);labelTxt(c,longDate(wk.date).toUpperCase(),tx,m+22,X.lab(7.4),"rgba(255,255,255,.85)",1.5);
   const tt=title4(wk),w=Wp-2*m-(DB.l.ill&&DB.l.ill!="none"?110:0);let sz=44*X.ds,L;for(;sz>=24;sz-=2){L=wrapT(tt,X.disp(sz),w);if(L.length<=2)break}
   const sub=se?[p?p.ref:se.ref,se.speaker].filter(Boolean).join("  ·  "):"",by=H-m+6-(sub?24:0)-(L.length-1)*sz*1.1;c.font=X.disp(sz);c.fillStyle="#fff";L.forEach((l,i)=>c.fillText(l,m,by+i*sz*1.1));
   if(sub){c.font=X.body(11.5*X.f.bs,400,true);c.fillStyle="rgba(255,255,255,.9)";c.fillText(sub,m,H-m+6)}
@@ -2946,19 +2966,20 @@ function churchTab(){const c=DB.c;
   return `<div class="card">${fld("Church name","c.name")}${fld("Tagline","c.tag",{ph:"Optional"})}
   <div class="two">${fld("Address","c.addr")}${fld("Phone","c.phone")}</div><div class="two">${fld("Website","c.web")}${fld("Email","c.email")}</div><div class="opt"><label class="chk"><input type="checkbox" data-c="c.qr" ${c.qr!==false?"checked":""}> Show a QR code for the website</label></div></div>
   <h3 class="h3">Service times</h3><div class="card">${listEd("c.times",[["d","Day","sm"],["t","Time","sm"],["n","Service name"]],"Add time")}</div>
-  <h3 class="h3">Logo</h3><div class="card logo">${c.logo?`<img src="${c.logo}" alt="Church logo">`:`<div class="nologo">No logo</div>`}<div class="row"><label class="btn ghost file">${c.logo?"Replace logo":"Add logo"}<input type="file" accept="image/*" data-c="logo"></label>${c.logo?`<button class="btn ghost" data-a="nologo">Remove</button>`:""}</div><p class="hint">A transparent PNG works best. The website address also becomes the QR code on the back of the booklet.</p></div>
+  <h3 class="h3">Logo</h3><div class="card logo">${c.logo?`<img src="${c.logo}" alt="Church logo">`:`<div class="nologo">No logo</div>`}<div class="row"><label class="btn ghost file">${c.logo?"Replace logo":"Add logo"}<input type="file" accept="image/*" data-c="logo"></label>${c.logo?`<button class="btn ghost" data-a="nologo">Remove</button>`:""}</div>${c.logo?`<label class="lsz">Logo size <input type="range" min="0.5" max="2.4" step="0.1" value="${parseFloat(c.ls)||1}" data-i="c.ls"></label>`:""}<p class="hint">A transparent PNG works best. The website address also becomes the QR code on the back of the booklet.</p></div>
   <h3 class="h3">Your data</h3><div class="card"><p class="hint" style="margin-top:0">Everything is saved in this browser only. Download a backup to keep it safe or move it to another device.</p><div class="row"><button class="btn" data-a="bk">Download backup</button><label class="btn ghost file">Restore backup<input type="file" accept=".json,application/json" data-c="rs"></label></div></div>`}
 function lookTab(){const l=DB.l,sl=l.design=="editorial"||l.design=="minimal",sg=seasonFor(W().date),ss=SEASONS.find(x=>x.k==sg),light=l.design=="poster"||l.design=="card",artOK=l.design!="traditional"&&(!sl||l.cover=="bold");
   const seasons=`<h3 class="h3 first">Seasons</h3><div class="card">${ss?`<p class="hint" style="margin:0 0 10px">This Sunday falls in <b>${ss.n}</b>.${l.pack==ss.k?"":` <button class="btn ghost sm" data-a="pack" data-v="${ss.k}">Use the ${ss.n} look</button>`}</p>`:`<p class="hint" style="margin:0 0 10px">One tap sets the design, color, typefaces, art and illustration for a season.</p>`}<div class="seas">${SEASONS.map(x=>`<button class="scard ${l.pack==x.k?"on":""}" data-a="pack" data-v="${x.k}" aria-pressed="${l.pack==x.k}"><i style="background:${x.acc}"></i><b>${x.n}</b><small>${x.d}</small></button>`).join("")}</div>${l.pack?`<button class="btn ghost sm" data-a="pack" data-v="" style="margin-top:10px">Clear season look</button>`:""}</div>`;
   const artH=artOK?`<h3 class="h3">Cover art</h3><div class="card"><div class="artg">${ART.map(a=>`<button class="acard ${l.art==a[0]?"on":""}" data-a="art" data-v="${a[0]}" aria-pressed="${l.art==a[0]}"><canvas data-art="${a[0]}" width="132" height="176"></canvas><small>${a[1]}</small></button>`).join("")}</div><div class="row" style="margin:10px 0 0"><button class="btn ghost sm" data-a="shuf">Shuffle art</button></div><p class="hint" style="margin-top:8px">The art is drawn fresh from your accent color, and it changes every week. Shuffle until you like it.</p></div>`:"";
   const illH=`<h3 class="h3">Illustration</h3><div class="card"><div class="illg"><button class="icard ${l.ill=="none"?"on":""}" data-a="ill" data-v="none" aria-pressed="${l.ill=="none"}"><span>None</span></button>${ILL.map(a=>`<button class="icard ${l.ill==a[0]?"on":""}" data-a="ill" data-v="${a[0]}" aria-pressed="${l.ill==a[0]}" title="${a[1]}" aria-label="${a[1]}"><canvas data-ill="${a[0]}" width="96" height="96"></canvas></button>`).join("")}</div></div>`;
   return seasons+`<h3 class="h3">Design</h3><div class="dsg">${DESIGNS.map(d=>`<button class="dcard ${l.design==d[0]?"on":""}" data-a="dsn" data-v="${d[0]}" aria-pressed="${l.design==d[0]}"><canvas data-d="${d[0]}" width="150" height="232"></canvas><b>${d[1]}</b><small>${d[2]}</small></button>`).join("")}</div>
-  ${PH.has(l.design)?`<div class="card" style="margin-top:12px"><div class="phr">${l.photo?`<img src="${l.photo}" alt="Cover photo">`:`<div class="nologo">No photo yet</div>`}<div><div class="row" style="margin:0"><label class="btn ghost file">${l.photo?"Replace photo":"Add cover photo"}<input type="file" accept="image/*" data-c="photo"></label>${l.photo?`<button class="btn ghost" data-a="nophoto">Remove</button>`:""}</div><p class="hint" style="margin-top:8px">A portrait or square photo works best. ${l.design=="arch"||l.design=="cross"||l.design=="bold"||l.design=="photo"?"Without one, this design shows generated art.":""}</p></div></div>${l.photo?`<div style="margin-top:12px"><div class="hint" style="margin:0 0 6px">Photo style</div>${seg(PT,l.pt||"natural","pt")}</div>`:""}</div>`:""}
+  ${PH.has(l.design)?`<div class="card" style="margin-top:12px"><div class="phr">${l.photo?`<img src="${l.photo}" alt="Cover photo">`:`<div class="nologo">No photo yet</div>`}<div><div class="row" style="margin:0"><label class="btn ghost file">${l.photo?"Replace photo":"Add cover photo"}<input type="file" accept="image/*" data-c="photo"></label>${l.photo?`<button class="btn ghost" data-a="nophoto">Remove</button>`:""}</div><p class="hint" style="margin-top:8px">A portrait or square photo works best. ${l.design=="arch"||l.design=="cross"||l.design=="bold"||l.design=="photo"?"Without one, this design shows generated art.":""}</p></div></div>${l.photo?`<div style="margin-top:12px"><div class="hint" style="margin:0 0 6px">Photo style</div>${seg(PT,l.pt||"natural","pt")}</div><div class="opt"><label class="chk"><input type="checkbox" data-c="l.pin" ${l.pin!==false?"checked":""}> Also use the photo as a banner inside</label></div>`:""}</div>`:""}
   ${artH}
   ${illH}
   <h3 class="h3">Accent color</h3><div class="card"><div class="sw8">${SWATCH.map(c=>`<button class="swt ${l.accent.toLowerCase()==c?"on":""}" style="--c:${c}" data-a="acc" data-v="${c}" aria-label="${c}"></button>`).join("")}<label class="swt cust ${SWATCH.includes(l.accent.toLowerCase())?"":"on"}" style="--c:${l.accent}" aria-label="Custom color"><input type="color" value="${l.accent}" data-c="l.accent"></label></div></div>
   <h3 class="h3">Typefaces</h3><div class="fonts">${Object.keys(FS).map(k=>{const f=FS[k];return `<button class="fcard ${l.font==k?"on":""}" data-a="fnt" data-v="${k}"><span style="font-family:'${f.d[0]}',Georgia,serif;font-weight:${f.d[1]}">${f.n}</span><small style="font-family:'${f.b[0]}',Georgia,serif">${f.d[0]} with ${f.b[0]}</small></button>`}).join("")}<button class="fcard ${l.font=="custom"?"on":""}" data-a="fnt" data-v="custom"><span style="font-family:'${esc(l.cf.d)}',Georgia,serif;font-weight:${l.cf.dw}">Custom</span><small style="font-family:'${esc(l.cf.b)}',Georgia,serif">${esc(l.cf.d)} with ${esc(l.cf.b)}</small></button></div>${l.font=="custom"?fontEditor():`<p class="hint" style="margin-top:8px">Choose Custom to use any Google Font or upload your own.</p>`}
   <h3 class="h3">Text alignment</h3><div class="card">${seg([["left","Left"],["center","Center"],["right","Right"],["justify","Justified"]],l.align||"left","aln")}<p class="hint">Applies to paragraphs, headings and the sermon text. Any section can use its own alignment in This week. Events keep their date column.</p></div>
+  <h3 class="h3">Bulletin language</h3><div class="card"><select data-c="l.lang" aria-label="Bulletin language">${Object.keys(LANGS).map(k=>`<option value="${k}" ${(l.lang||"en")==k?"selected":""}>${LANGS[k].n}</option>`).join("")}</select><p class="hint">Changes the printed headings (Welcome, Announcements…), the date format and the QR label. Type your own text in any language. Scripture inserted from the built-in Bible is English (Berean Standard Bible); paste another translation into the section to use it. Please have a native speaker check the headings before printing.</p></div>
   <h3 class="h3">Text size</h3><div class="card">${seg([["std","Standard"],["large","Large print"]],l.size,"sz")}<p class="hint">Large print enlarges all text by about 14 percent. Long bulletins may shrink slightly to fit.</p></div>
   ${sl?`<h3 class="h3">Cover</h3><div class="card">${seg([["light","Light"],["bold","Bold color"]],l.cover,"cov")}<p class="hint">Light covers print cleanly on any office printer. Bold covers suit commercial printing and digital use. The digital cover is always bold.</p></div>`:`<p class="hint" style="margin-top:18px">This design uses color to the edge of the page, so print it borderless or on a commercial printer. Editorial and Minimal have light covers that suit any office printer.</p>`}`}
 async function thumbs(){const cs=document.querySelectorAll("canvas[data-d],canvas[data-art],canvas[data-ill]");if(!cs.length)return;await loadFonts();cs.forEach(cv=>{try{if(cv.dataset.art){const c=cv.getContext("2d"),k=cv.dataset.art,d=DB.l.design,kk=k=="auto"?(ART_AUTO[d]||"none"):k,lt=d=="poster"||d=="card";c.clearRect(0,0,cv.width,cv.height);if(kk=="none"){c.fillStyle=lt?tint(DB.l.accent,.1):DB.l.accent;c.fillRect(0,0,cv.width,cv.height)}else artFill(c,0,0,cv.width,cv.height,kk,{seed:artSeed(),light:lt});return}
@@ -2988,10 +3009,10 @@ async function doLayout(){const el=$("pv");if(!el)return;const n=++relN;await lo
 /* ---------- render ---------- */
 const TABS=[["week","This week"],["church","Church"],["look","Look"],["prev","Preview"]];
 function render(keepScroll){if(S.tab=="prev"&&matchMedia("(min-width:980px)").matches)S.tab="week";const y=window.scrollY,body=S.tab=="church"?churchTab():S.tab=="look"?lookTab():weekTab();
-  $("app").innerHTML=`<header class="top"><div class="brand"><b>Orderly</b><span>Church bulletins</span></div></header>
+  $("app").innerHTML=`<header class="top"><div class="brand"><b>Orderly</b><span>Church bulletins</span></div><button class="btn ghost hlp" data-a="help">Help</button></header>
   <nav class="tabs" role="tablist">${TABS.map(t=>`<button role="tab" class="${S.tab==t[0]?"on":""} ${t[0]=="prev"?"pvt":""}" data-a="tab" data-v="${t[0]}" aria-selected="${S.tab==t[0]}">${t[1]}</button>`).join("")}</nav>
   <div class="cols t-${S.tab}"><main class="edit">${S.tab=="prev"?"":body}</main><aside class="side">${pvPanel()}</aside></div>
-  ${S.ov!=null?ovHtml():""}${S.cpt?`<div class="ov cpo" data-a="cptx"><div class="ovb" data-stop="1"><p>${esc(S.cpt.m)}</p><textarea id="cpt" readonly>${esc(S.cpt.t)}</textarea><button class="btn" data-a="cptx">Done</button></div></div>`:""}`;
+  ${S.ov!=null?ovHtml():""}${S.mdl?mdlHtml():""}${S.cpt?`<div class="ov cpo" data-a="cptx"><div class="ovb" data-stop="1"><p>${esc(S.cpt.m)}</p><textarea id="cpt" readonly>${esc(S.cpt.t)}</textarea><button class="btn" data-a="cptx">Done</button></div></div>`:""}`;
   if(keepScroll)window.scrollTo(0,y);doLayout();if(S.tab=="look")thumbs();if(S.cpt){const x=$("cpt");if(x){x.focus();x.select()}}}
 function ovHtml(){return `<div class="ov" data-a="ovx"><div class="ovb" data-stop="1"><img id="ovimg" alt="Page preview"><div class="row"><button class="btn" data-a="ovsave">Save image</button><button class="btn ghost" data-a="ovx">Close</button></div></div></div>`}
 async function fillOv(){const i=S.ov;await loadFonts();const R=build(DB.l.layout,3),p=R.pages[i];if(!p)return;const im=$("ovimg");if(im)im.src=p.cv.toDataURL("image/png");S.ovName=slug(DB.c.name)+"-"+slug(p.label)+".png";S.ovBlob=await new Promise(r=>p.cv.toBlob(r,"image/png"))}
@@ -3046,7 +3067,7 @@ document.addEventListener("click",e=>{if(e.target.closest("[data-stop]")&&!e.tar
 document.addEventListener("keydown",e=>{if((e.key=="Enter"||e.key==" ")&&e.target.matches&&e.target.matches("figure[data-a]")){e.preventDefault();A[e.target.dataset.a](e.target.dataset.v)}if(e.key=="Escape"){if(S.ov!=null)A.ovx();else if(S.cpt)A.cptx()}});
 
 /* ---------- logo, backup ---------- */
-function setLogo(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const mx=700,k=Math.min(1,mx/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);DB.c.logo=cv.toDataURL("image/png");persist();render(true);res()};im.onerror=()=>{toast("Couldn’t read that image");res()};im.src=r.result};r.readAsDataURL(f)})}
+function setLogo(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const mx=1400,k=Math.min(1,mx/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);DB.c.logo=cv.toDataURL("image/png");persist();render(true);res()};im.onerror=()=>{toast("Couldn’t read that image");res()};im.src=r.result};r.readAsDataURL(f)})}
 A.bk=async()=>{const b=new Blob([JSON.stringify(DB)],{type:"application/json"});await deliver("orderly-backup-"+iso(new Date())+".json",b)};
 function restore(f){const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.weeks||!o.weeks.length||!o.c)throw 0;DB={c:Object.assign({},DEF.c,o.c),l:Object.assign({},DEF.l,o.l),weeks:o.weeks,cur:o.cur};if(!W())DB.cur=DB.weeks[0].id;persist();S.open={};render();toast("Backup restored")}catch(e){toast("That file isn’t an Orderly backup")}};r.readAsText(f)}
 
@@ -3095,14 +3116,26 @@ function textOut(){const w=W(),c=DB.c,o=[];o.push(c.name);o.push(longDate(w.date
     else if(s.k=="announce"&&s.items.length)R.push("ANNOUNCEMENTS",...s.items.map(i=>"• "+[i.h,i.b].filter(Boolean).join(": ")));
     else if(s.k=="events"&&s.items.length)R.push("COMING UP",...s.items.map(i=>"• "+[i.d,i.h,i.b].filter(Boolean).join(" — ")));
     else if(s.k=="prayer"&&s.text.trim())R.push("PRAYER REQUESTS",...s.text.split("\n").filter(x=>x.trim()).map(x=>"• "+x.trim()));
-    else if((s.k=="giving"||s.k=="connect")&&s.text.trim())R.push(SECN[s.k].toUpperCase(),s.text.trim());
+    else if((s.k=="giving"||s.k=="connect")&&s.text.trim())R.push(tr(s.k).toUpperCase(),s.text.trim());
     else if(s.k=="custom"&&s.text.trim())R.push((s.h||"").toUpperCase(),s.text.trim());
     if(R.length){o.push(...R.filter(x=>x!==""),"")}});
-  const tl=timesList().map(t=>[t.d,t.t].filter(Boolean).join(" ")+(t.n?" · "+t.n:""));if(tl.length)o.push("JOIN US",...tl);[c.addr,c.phone,c.email,webShow(c.web)].filter(Boolean).forEach(x=>o.push(x));return o.join("\n").replace(/\n{3,}/g,"\n\n").trim()}
+  const tl=timesList().map(t=>[t.d,t.t].filter(Boolean).join(" ")+(t.n?" · "+t.n:""));if(tl.length)o.push(tr("join").toUpperCase(),...tl);[c.addr,c.phone,c.email,webShow(c.web)].filter(Boolean).forEach(x=>o.push(x));return o.join("\n").replace(/\n{3,}/g,"\n\n").trim()}
 A.cptext=()=>{const t=textOut(),manual=()=>{S.cpt={t,m:"Press and hold to select, then copy."};render(true)};try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast("Copied. Paste it into an email or message."),manual);return}}catch(e){}manual()};
 
 /* ---------- start ---------- */
 render();
+
+/* ---------- help ---------- */
+A.mdlx=()=>{S.mdl=null;render(true)};
+A.help=()=>{S.mdl={k:"help"};render(true)};
+function mdlHtml(){return `<div class="ov" data-a="mdlx"><div class="ovb mdl" data-stop="1" role="dialog" aria-label="Help">${HELP}<div class="row"><button class="btn" data-a="mdlx">Close</button></div></div></div>`}
+const HELP=`<h2>Orderly help</h2>
+<h4>Make a bulletin in five steps</h4><ol><li><b>Church</b> tab: add your church name, address, service times, website and logo once. They carry into every bulletin.</li><li><b>This week</b> tab: set the date, theme and sermon, then fill in the order of service, announcements and events.</li><li><b>Look</b> tab: pick a design, accent color and fonts. Choose a layout: booklet, tri-fold, letter page or digital slides.</li><li><b>Preview</b>: check every page. Look over each page, especially the date and any empty sections.</li><li><b>Download PDF</b> and print, or save the slides for the screen.</li></ol>
+<h4>Every week</h4><p>Use <b>New week</b> in This week. It copies the current bulletin forward, moves the date a week ahead, clears the sermon, theme and prayer requests, and drops events that have passed. In Events, <b>Paste a list of events</b> adds several at once, one per line: <i>Sat, Nov 15 - Men’s breakfast - 8:00 AM</i>.</p>
+<h4>Printing</h4><ul><li><b>Booklet</b>: print the PDF double-sided on letter paper, landscape, <b>flip on the short edge</b>, then fold in half. No page is split across pages, and the sermon always gets its own page.</li><li><b>Tri-fold</b>: print double-sided on letter paper, landscape, flip on the short edge, then fold in thirds.</li><li><b>Letter page</b>: a normal one-sided or two-sided page.</li><li><b>Digital slides</b>: save the images and post them or show them on a screen.</li><li>Print at 100% (“actual size”), not “fit to page”. Bold color covers print edge to edge, so they suit a print shop.</li></ul>
+<h4>Tips</h4><ul><li>A photo-capable design (Photo, Bold, Cross, Arch) can use your own photo on the cover and as a banner inside. Portrait or square photos work best.</li><li><b>Large print</b> is in Look, Text size. Long bulletins may shrink slightly to fit.</li><li>Bulletin language changes headings and dates (Spanish, French, Portuguese, German). Scripture from the built-in Bible stays English.</li><li>The website address becomes the QR code on the back. Turn it off in Church if you don’t want it.</li></ul>
+<h4>Your data</h4><p>Everything stays in this browser on this device. Nothing is uploaded and there are no accounts. If you clear your browser data or switch computers, you’ll lose it unless you save a backup, so use <b>Download backup</b> now and then and <b>Restore backup</b> on the other computer.</p>
+<h4>Fonts, songs and photos</h4><p>The Bible text is the public-domain Berean Standard Bible. Song lyrics and photos aren’t included. Make sure you have the right to print what you add, for example a CCLI license for lyrics.</p>`;
 
 </script>
 </body>

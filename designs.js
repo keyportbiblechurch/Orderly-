@@ -16,6 +16,7 @@ let PHOTO={src:"",img:null};
 function photoImg(){const s=DB.l.photo;if(!s)return null;if(PHOTO.src!=s){PHOTO={src:s,img:new Image()};PHOTO.img.onload=()=>{if(typeof relayout=="function"){relayout();if(typeof thumbs=="function")thumbs()}};PHOTO.img.src=s}return PHOTO.img.complete&&PHOTO.img.naturalWidth?PHOTO.img:null}
 function drawPhoto(c,x,y,w,h){const im=photoImg();if(!im)return false;const r=Math.max(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*r,ih=im.naturalHeight*r;c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih);treat(c,x,y,w,h);c.restore();return true}
 const PH=new Set(["photo","bold","cross","arch"]),PT=[["natural","Natural"],["duotone","Duotone"],["mono","Black & white"],["warm","Warm"]];
+function photoBand(c,x,y,w,h){if(!drawPhoto(c,x,y,w,h))return;const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,"rgba(0,0,0,.04)");g.addColorStop(1,"rgba(0,0,0,.3)");c.fillStyle=g;c.fillRect(x,y,w,h);c.fillStyle=DB.l.accent;c.fillRect(x,y+h,w,2)}
 function treat(c,x,y,w,h){const t=DB.l.pt||"natural";if(t=="natural")return;const hs=hslOf(DB.l.accent);const gray=()=>{c.globalCompositeOperation="saturation";c.fillStyle="#808080";c.fillRect(x,y,w,h)};
   if(t=="mono"){gray();c.globalCompositeOperation="source-over"}
   else if(t=="duotone"){gray();c.globalCompositeOperation="multiply";c.fillStyle=hsl(hs[0],Math.min(100,hs[1]+10),Math.min(70,hs[2]+18),1);c.fillRect(x,y,w,h);c.globalCompositeOperation="screen";c.fillStyle=hsl(hs[0],hs[1],14,1);c.fillRect(x,y,w,h);c.globalCompositeOperation="source-over"}
@@ -34,11 +35,11 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   const dateL=longDate(wk.date),fit=(max,min,w,ml)=>{let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
   let tb=0;const hasQ=!!coverQuote(),ill=DB.l.ill&&DB.l.ill!="none"?DB.l.ill:null;const dispT=(L,sz,x,y,col,al)=>{tb=Math.max(tb,y+(L.length-1)*sz*1.1+sz*.25);c.font=X.disp(sz);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";L.forEach((l,i)=>c.fillText(l,x,y+i*sz*1.1));c.textAlign="left"};
   const ital=(t,sz,x,y,col,al)=>{if(y<Hp*.88)tb=Math.max(tb,y+sz*.3);c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";c.fillText(t,x,y);c.textAlign="left"};
-  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left");const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
+  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left",{cap:1.8});const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
   c.fillStyle="#fff";c.fillRect(0,0,Wp,Hp);
   if(d=="traditional"){const cx=Wp/2,fr=m*.5;c.strokeStyle=acc;c.lineWidth=1.5*u;c.strokeRect(fr,fr,Wp-2*fr,Hp-2*fr);c.lineWidth=.5*u;c.strokeRect(fr+5*u,fr+5*u,Wp-2*fr-10*u,Hp-2*fr-10*u);
     let y=m+22*u;if(ill)drawIll(c,ill,cx,y,17*u,acc,1.1*u);else{c.strokeStyle=acc;c.lineWidth=1.3*u;c.beginPath();c.moveTo(cx,y-12*u);c.lineTo(cx,y+14*u);c.moveTo(cx-8*u,y-3*u);c.lineTo(cx+8*u,y-3*u);c.stroke()}
-    y+=40*u;const lw=drawLogo(c,cx-45*u,y-6*u,90*u,36*u,"left");if(lw){y+=40*u}
+    y+=40*u;const room=Hp*.4-60*u-8*u-(y-6*u)-34*u,lw=drawLogo(c,cx-45*u,y-6*u,90*u,36*u,"ctr",{top:1,cap:Math.max(1,room/(36*u))});if(lw){y+=40*u+LX+(LX?6*u:0)}
     labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(9*u),acc,2.2*u);y+=14*u;c.strokeStyle=RULE;c.lineWidth=.6*u;c.beginPath();c.moveTo(cx-24*u,y);c.lineTo(cx+24*u,y);c.stroke();
     labelC(c,dateL.toUpperCase(),cx,Hp*.4-60*u,X.lab(8*u),MUTE,1.6*u);
     const f=fit(34*u*X.ds,20*u,Wp-2*m-24*u,4);dispT(f.L,f.sz,cx,Hp*.4,INK,"center");if(subL)ital(subL,12*u*X.f.bs,cx,Hp*.4+f.L.length*f.sz*1.1+14*u,MUTE,"center");
@@ -51,8 +52,8 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   else if(d=="photo"){drawPhoto(c,0,0,Wp,Hp);const g=c.createLinearGradient(0,0,0,Hp);g.addColorStop(0,"rgba(0,0,0,.35)");g.addColorStop(.45,"rgba(0,0,0,.12)");g.addColorStop(1,"rgba(0,0,0,.82)");c.fillStyle=g;c.fillRect(0,0,Wp,Hp);
     labelTxt(c,dateL.toUpperCase(),m,m+8*u,X.lab(8.5*u),"rgba(255,255,255,.9)",1.8*u);
     const f=fit(42*u*X.ds,24*u,Wp-2*m,4),by=Hp-m-62*u;dispT(f.L,f.sz,m,by-(f.L.length-1)*f.sz*1.1-(subL?36*u:0),"#fff");if(subL)ital(subL,12*u*X.f.bs,m,by-8*u,"rgba(255,255,255,.88)");
-    c.fillStyle="rgba(255,255,255,.5)";c.fillRect(m,Hp-m-44*u,Wp-2*m,.6*u);const lw=drawLogo(c,m,Hp-m-36*u,90*u,34*u,"left");c.font=X.disp(14*u*X.ds);c.fillStyle="#fff";c.textAlign="left";c.fillText(DB.c.name,m+(lw?lw+10*u:0),Hp-m-10*u)}
-  else if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate()),mon=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"}),wd=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
+    c.fillStyle="rgba(255,255,255,.5)";c.fillRect(m,Hp-m-44*u,Wp-2*m,.6*u);const lw=drawLogo(c,m,Hp-m-36*u,90*u,34*u,"left",{cap:1.7});c.font=X.disp(14*u*X.ds);c.fillStyle="#fff";c.textAlign="left";c.fillText(DB.c.name,m+(lw?lw+10*u:0),Hp-m-10*u)}
+  else if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate()),mon=new Date(wk.date+"T12:00:00").toLocaleDateString(dloc(),{month:"long",year:"numeric"}),wd=new Date(wk.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
     if(o.bold)coverArt(c,0,0,Wp,Hp,d);const ink=o.bold?"#fff":INK,mu=o.bold?"rgba(255,255,255,.78)":MUTE,ac=o.bold?"#fff":acc;
     c.font=X.disp(150*u*X.ds);c.fillStyle=ac;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(day,m-4*u,m+118*u*X.ds);const dw=c.measureText(day).width;
     labelTxt(c,wd.toUpperCase(),m+dw+14*u,m+62*u,X.lab(8.5*u),mu,1.8*u);labelTxt(c,mon.toUpperCase(),m+dw+14*u,m+78*u,X.lab(8.5*u),mu,1.8*u);
@@ -72,7 +73,7 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
     labelC(c,dateL.toUpperCase(),cx,bh+34*u,X.lab(8*u),MUTE,1.8*u);const f=fit(32*u*X.ds,20*u,Wp-2*m,3);dispT(f.L,f.sz,cx,bh+34*u+14*u+f.sz*.8,INK,"center");
     if(subL)ital(subL,11.5*u*X.f.bs,cx,bh+34*u+14*u+f.sz*.8+f.L.length*f.sz*1.1+2*u,MUTE,"center");labelC(c,DB.c.name.toUpperCase(),cx,Hp-m-2*u,X.lab(8*u),acc,2*u)}
   else if(d=="card"){coverArt(c,0,0,Wp,Hp,d,{light:true});const cx=Wp/2,p=m*.5,cw=Wp-2*p,ch=Hp-2*p;c.save();c.shadowColor="rgba(0,0,0,.12)";c.shadowBlur=16*u;c.shadowOffsetY=4*u;c.fillStyle="#fff";c.fillRect(p,p,cw,ch);c.restore();c.strokeStyle=acc;c.lineWidth=.7*u;c.strokeRect(p+8*u,p+8*u,cw-16*u,ch-16*u);
-    let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"left");if(lw)y+=26*u;else if(ill)drawIll(c,ill,cx,p+34*u,15*u,acc,1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
+    let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"ctr",{top:1});if(lw)y+=26*u+LX*1.3+(LX?14*u:0);else if(ill)drawIll(c,ill,cx,p+34*u,15*u,acc,1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
     const cy=ch*(hasQ?.34:.42)+p*.5;labelC(c,dateL.toUpperCase(),cx,cy,X.lab(8*u),MUTE,1.6*u);const f=fit(32*u*X.ds,20*u,cw-60*u,4);dispT(f.L,f.sz,cx,cy+36*u,INK,"center");
     const sy=cy+36*u+f.L.length*f.sz*1.1+6*u;c.fillStyle=acc;c.beginPath();c.arc(cx,sy+4*u,2.2*u,0,6.3);c.fill();if(subL)ital(subL,11.5*u*X.f.bs,cx,sy+26*u,MUTE,"center");if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,cx,Hp-p-26*u,MUTE,"center")}
   else{const bold=o.bold,ink=bold?"#fff":INK,sub=bold?"rgba(255,255,255,.78)":MUTE;if(bold)coverArt(c,0,0,Wp,Hp,d);
@@ -98,18 +99,18 @@ function headBase(X,txt){const sz=X.s,d=X.design;
   return{h:sz*3.1,keep:true,draw(c,x,y,w){const bl=y+sz*2.05,t=txt.toUpperCase(),wd=labelTxt(c,t,x,bl,X.lab(sz*.72),X.acc,1.4);c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(x+wd+8,bl-sz*.28);c.lineTo(x+w,bl-sz*.28);c.stroke()}}}
 /* letter-page masthead */
 function pageHeader(c,wk,Wp,m){const X=styleOf(10),d=DB.l.design,acc=DB.l.accent,th=(wk.theme||"").trim(),dl=longDate(wk.date);c.textBaseline="alphabetic";
-  if(HC.has(d)){const cx=Wp/2,lw=drawLogo(c,cx-30,m-12,60,28,"left");c.textAlign="center";c.fillStyle=INK;c.font=X.disp(22*X.ds);c.fillText(DB.c.name,cx,m+(lw?28:14));labelC(c,dl.toUpperCase(),cx,m+(lw?42:30),X.lab(7.6),MUTE,1.4);if(th){c.textAlign="center";c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,cx,m+(lw?56:46))}
+  if(HC.has(d)){const cx=Wp/2,lw=drawLogo(c,cx-30,m-12,60,28,"ctr",{cap:1.3});c.textAlign="center";c.fillStyle=INK;c.font=X.disp(22*X.ds);c.fillText(DB.c.name,cx,m+(lw?28:14));labelC(c,dl.toUpperCase(),cx,m+(lw?42:30),X.lab(7.6),MUTE,1.4);if(th){c.textAlign="center";c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,cx,m+(lw?56:46))}
     c.fillStyle=acc;c.fillRect(m,m+62,Wp-2*m,1.6);c.fillRect(m,m+66,Wp-2*m,.5);c.textAlign="left";return}
   if(HB.has(d)){const bh=m+66;c.fillStyle=acc;c.fillRect(0,0,Wp,bh);if(d=="photo"&&photoImg()){drawPhoto(c,0,0,Wp,bh);c.fillStyle="rgba(0,0,0,.45)";c.fillRect(0,0,Wp,bh)}
-    const lw=drawLogo(c,m,m-8,80,40,"left"),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle="#fff";c.font=X.disp(22*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),"rgba(255,255,255,.85)",1.4);if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle="#fff";c.fillText(th,tx,m+50)}return}
+    const lw=drawLogo(c,m,m-8,80,40,"left",{cap:1.4}),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle="#fff";c.font=X.disp(22*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),"rgba(255,255,255,.85)",1.4);if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle="#fff";c.fillText(th,tx,m+50)}return}
   if(d=="minimal"){const day=String(new Date(wk.date+"T12:00:00").getDate());c.textAlign="left";c.font=X.disp(58*X.ds);c.fillStyle=acc;c.fillText(day,m-2,m+44);const dw=c.measureText(day).width;c.fillStyle=INK;c.font=X.disp(15*X.ds);c.fillText(DB.c.name,m+dw+14,m+20);
     labelTxt(c,dl.toUpperCase(),m+dw+14,m+36,X.lab(7.4),MUTE,1.4);if(th){c.font=X.body(10.5*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,m+dw+14,m+50)}c.fillStyle=RULE;c.fillRect(m,m+62,Wp-2*m,.7);return}
-  const lw=drawLogo(c,m,m-4,90,44,"left"),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle=INK;c.font=X.disp(20*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),MUTE,1.4);
+  const lw=drawLogo(c,m,m-4,90,44,"left",{cap:1.4}),tx=m+(lw?lw+12:0);c.textAlign="left";c.fillStyle=INK;c.font=X.disp(20*X.ds);c.fillText(DB.c.name,tx,m+14);labelTxt(c,dl.toUpperCase(),tx,m+32,X.lab(7.6),MUTE,1.4);
   if(th){c.font=X.body(11*X.f.bs,400,true);c.fillStyle=acc;c.fillText(th,tx,m+48)}c.fillStyle=acc;c.fillRect(m,m+60,Wp-2*m,1.6);if(d=="split")c.fillRect(m-16,m-6,3.6,58)}
 /* letter-page hero banner */
 function heroHeader(c,wk,Wp,m,H){const X=styleOf(10),acc=DB.l.accent,u=Wp/396,se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
   if(photoImg()){drawPhoto(c,0,0,Wp,H);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(0,0,0,.3)");g.addColorStop(1,"rgba(0,0,0,.7)");c.fillStyle=g;c.fillRect(0,0,Wp,H)}else coverArt(c,0,0,Wp,H,"bold");
-  const lw=drawLogo(c,m,m-10,70,34,"left"),tx=m+(lw?lw+10:0);c.textAlign="left";c.textBaseline="alphabetic";c.fillStyle="#fff";c.font=X.disp(15*X.ds);c.fillText(DB.c.name,tx,m+8);labelTxt(c,longDate(wk.date).toUpperCase(),tx,m+22,X.lab(7.4),"rgba(255,255,255,.85)",1.5);
+  const lw=drawLogo(c,m,m-10,70,34,"left",{cap:1.4}),tx=m+(lw?lw+10:0);c.textAlign="left";c.textBaseline="alphabetic";c.fillStyle="#fff";c.font=X.disp(15*X.ds);c.fillText(DB.c.name,tx,m+8);labelTxt(c,longDate(wk.date).toUpperCase(),tx,m+22,X.lab(7.4),"rgba(255,255,255,.85)",1.5);
   const tt=title4(wk),w=Wp-2*m-(DB.l.ill&&DB.l.ill!="none"?110:0);let sz=44*X.ds,L;for(;sz>=24;sz-=2){L=wrapT(tt,X.disp(sz),w);if(L.length<=2)break}
   const sub=se?[p?p.ref:se.ref,se.speaker].filter(Boolean).join("  ·  "):"",by=H-m+6-(sub?24:0)-(L.length-1)*sz*1.1;c.font=X.disp(sz);c.fillStyle="#fff";L.forEach((l,i)=>c.fillText(l,m,by+i*sz*1.1));
   if(sub){c.font=X.body(11.5*X.f.bs,400,true);c.fillStyle="rgba(255,255,255,.9)";c.fillText(sub,m,H-m+6)}
