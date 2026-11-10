@@ -174,6 +174,69 @@ details.pst{margin:10px 0 2px;font-size:13px}details.pst summary{cursor:pointer;
 .schb span{width:16px;height:16px;border-radius:50%;flex:none}.schb small{font-size:11px;color:#444}
 .swt.same{background:linear-gradient(135deg,var(--c) 50%,#fff 50%);border:1px dashed #999}
 
+/* mobile bottom navigation + More sheet */
+.bnav{display:none}
+@media (max-width:979px){
+ .tabs{display:none}
+ body{padding-block:0 calc(84px + env(safe-area-inset-bottom,0px))}
+ .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--sf);border-top:1px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 18px rgba(0,0,0,.06)}
+ .bnav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 4px;color:var(--mu);font:500 11px var(--ui);border-radius:10px;min-height:52px}
+ .bnav button.on{color:var(--ac);background:var(--acs,transparent)}
+ .bnav button:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+ .sheetbg{position:fixed;inset:0;background:rgba(10,14,20,.5);z-index:45}
+ .sheet{position:fixed;left:0;right:0;bottom:0;z-index:46;background:var(--sf);border-radius:18px 18px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:82vh;overflow:auto;box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:shup .2s ease-out}
+ .sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--ln);margin:2px auto 10px}
+ .sheet .shh{display:flex;flex-direction:column;margin-bottom:4px}.sheet .shh b{font:500 20px var(--se)}.sheet .shh small{color:var(--mu)}
+ .sheet h4{margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
+ .mi{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;margin:0 0 8px;color:var(--ink);font:inherit;cursor:pointer;min-height:52px}
+ label.mi{align-items:flex-start!important;text-align:left!important;justify-content:center}
+ .mi b{font-weight:600;font-size:15px}.mi small{color:var(--mu);font-size:12.5px;margin-top:1px}.mi.file input{display:none}
+ .sclose{width:100%;margin-top:8px}
+ @keyframes shup{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+
+/* form polish */
+.two{row-gap:0}.fl{margin-bottom:14px}.opt{margin-bottom:14px}.opt+.fl,.opt+.two{margin-top:0}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-height:46px;text-align:left;line-height:1.2}
+input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 10px}
+.chip{background:var(--bg);border:1px solid var(--ln);border-radius:999px;padding:7px 14px;font:500 13px var(--ui);color:var(--ink);min-height:36px;cursor:pointer}
+.chip:hover{border-color:var(--ac)}
+.datel{margin:0 0 14px;font:500 17px var(--se);color:var(--ink)}
+.it:has(input.sm~input.sm){display:grid;grid-template-columns:1fr 1fr 34px;gap:6px}
+.it:has(input.sm~input.sm) input.sm{flex:none}
+.it:has(input.sm~input.sm) .x{grid-column:3;grid-row:1}
+.it:has(input.sm~input.sm) input:not(.sm){grid-column:1/3;grid-row:2}
+.two>.fl:last-child{margin-bottom:14px}.card>.fl:last-child,.card>.two:last-child>.fl{margin-bottom:0}
+
+/* ---- elegance pass ---- */
+:root{--r:14px;--sh:0 1px 2px rgba(20,28,40,.05),0 8px 24px -6px rgba(20,28,40,.08)}
+body{-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11"}
+.top{padding:26px 0 12px}
+.brand{align-items:center;gap:10px}.bmark{width:34px;height:34px;flex:none;border-radius:9px;box-shadow:0 2px 8px rgba(31,58,104,.25)}
+.brand b{font-size:31px;position:relative;top:-1px}.brand span{padding-left:4px;border-left:1px solid var(--ln);padding-left:12px}
+.card{border-radius:var(--r);padding:18px;border-color:color-mix(in srgb,var(--ln) 70%,transparent)}
+.h3{margin:30px 4px 10px;font-size:11.5px;letter-spacing:.12em}
+.btn{border-radius:10px;transition:transform .08s,box-shadow .15s,background .15s,border-color .15s}
+.btn:not([disabled]):hover{box-shadow:0 4px 14px -4px rgba(31,58,104,.4)}
+.btn.ghost:not([disabled]):hover{border-color:var(--ac);box-shadow:none}
+.btn:not([disabled]):active{transform:translateY(1px)}
+input[type=text],input[type=date],input:not([type]),input[type=color],select,textarea{border-radius:10px;transition:border-color .15s,box-shadow .15s,background .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 18%,transparent);outline:none;background:var(--sf)}
+.fl>span{letter-spacing:.01em}
+.sec{border-radius:var(--r);transition:box-shadow .15s}.sec:hover{box-shadow:var(--sh)}
+.tabs button{transition:color .15s}.tabs button:hover{color:var(--ink)}
+.sub{margin:2px 0 6px}
+.t-look .sub+.h3.first{margin-top:18px}
+.dcard,.fcard,.acard,.icard,.schb{transition:transform .12s,box-shadow .15s,border-color .15s}
+.dcard:hover,.fcard:hover,.acard:hover,.icard:hover,.schb:hover{transform:translateY(-1px);box-shadow:var(--sh)}
+.pgs figure{transition:transform .15s,box-shadow .15s}
+.pgs figure:hover{transform:translateY(-2px)}
+@media (max-width:979px){.top{padding-top:calc(18px + env(safe-area-inset-top,0px))}.brand b{font-size:28px}.brand span{display:none}}
+.it>input:first-child:not(.sm){flex:3 1 0}.it>input:nth-child(2):not(.sm){flex:2 1 0}
+.it>input:nth-child(2):not(.sm):not(:last-of-type){color:var(--mu)}
+
 </style>
 </head>
 <body>
@@ -3026,7 +3089,7 @@ function weekTab(){const w=W(),n=w.secs.length;
   return `<div class="card pick"><label class="fl" for="wsel"><span>Bulletin</span><select id="wsel" data-c="cur">${DB.weeks.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<option value="${x.id}" ${x.id==w.id?"selected":""}>${esc(wlabel(x))}</option>`).join("")}</select></label>
   <div class="row"><button class="btn" data-a="newwk">New week</button><button class="btn ghost" data-a="dupwk">Duplicate</button><button class="btn ghost ${S.del?"dng":""}" data-a="delwk" ${DB.weeks.length<2?"disabled":""}>${S.del?"Tap again to delete":"Delete"}</button></div>
   <p class="hint">New week copies this one and moves the date to the following Sunday. Clear what changes and keep the rest.</p></div>
-  <div class="card"><div class="two">${fld("Date","w.date",{type:"date"})}${fld("Theme or series line","w.theme",{ph:"Optional. Appears on the cover"})}</div></div>
+  <div class="card">${fld("Date","w.date",{type:"date"})}<div class="chips" role="group" aria-label="Quick dates"><button class="chip" data-a="setd" data-v="0">This Sun.</button><button class="chip" data-a="setd" data-v="7">Next Sun.</button><button class="chip" data-a="setd" data-v="14">Two weeks</button></div><p class="datel">${esc(longDate(W().date))}</p>${fld("Theme or series line","w.theme",{ph:"Optional. Appears on the cover"})}</div>
   <h3 class="h3">Sections</h3><div class="secs">${w.secs.map((s,i)=>secEditor(s,i,n)).join("")}</div>
   <button class="add big" data-a="addsec">+ Add a custom section</button>`}
 function churchTab(){const c=DB.c;
@@ -3039,18 +3102,20 @@ function lookTab(){const l=DB.l,sl=l.design=="editorial"||l.design=="minimal",sg
   const seasons=`<h3 class="h3 first">Seasons</h3><div class="card">${ss?`<p class="hint" style="margin:0 0 10px">This Sunday falls in <b>${ss.n}</b>.${l.pack==ss.k?"":` <button class="btn ghost sm" data-a="pack" data-v="${ss.k}">Use the ${ss.n} look</button>`}</p>`:`<p class="hint" style="margin:0 0 10px">One tap sets the design, color, typefaces, art and illustration for a season.</p>`}<div class="seas">${SEASONS.map(x=>`<button class="scard ${l.pack==x.k?"on":""}" data-a="pack" data-v="${x.k}" aria-pressed="${l.pack==x.k}"><i style="background:${x.acc}"></i><b>${x.n}</b><small>${x.d}</small></button>`).join("")}</div>${l.pack?`<button class="btn ghost sm" data-a="pack" data-v="" style="margin-top:10px">Clear season look</button>`:""}</div>`;
   const artH=artOK?`<h3 class="h3">Cover art</h3><div class="card"><div class="artg">${ART.map(a=>`<button class="acard ${l.art==a[0]?"on":""}" data-a="art" data-v="${a[0]}" aria-pressed="${l.art==a[0]}"><canvas data-art="${a[0]}" width="132" height="176"></canvas><small>${a[1]}</small></button>`).join("")}</div><div class="row" style="margin:10px 0 0"><button class="btn ghost sm" data-a="shuf">Shuffle art</button></div><p class="hint" style="margin-top:8px">The art is drawn fresh from your accent color, and it changes every week. Shuffle until you like it.</p></div>`:"";
   const illH=`<h3 class="h3">Illustration</h3><div class="card"><div class="illg"><button class="icard ${l.ill=="none"?"on":""}" data-a="ill" data-v="none" aria-pressed="${l.ill=="none"}"><span>None</span></button>${ILL.map(a=>`<button class="icard ${l.ill==a[0]?"on":""}" data-a="ill" data-v="${a[0]}" aria-pressed="${l.ill==a[0]}" title="${a[1]}" aria-label="${a[1]}"><canvas data-ill="${a[0]}" width="96" height="96"></canvas></button>`).join("")}</div></div>`;
-  return seasons+`<h3 class="h3">Design</h3><div class="dsg">${DESIGNS.map(d=>`<button class="dcard ${l.design==d[0]?"on":""}" data-a="dsn" data-v="${d[0]}" aria-pressed="${l.design==d[0]}"><canvas data-d="${d[0]}" width="150" height="232"></canvas><b>${d[1]}</b><small>${d[2]}</small></button>`).join("")}</div>
+  const H=seasons+`<h3 class="h3">Design</h3><div class="dsg">${DESIGNS.map(d=>`<button class="dcard ${l.design==d[0]?"on":""}" data-a="dsn" data-v="${d[0]}" aria-pressed="${l.design==d[0]}"><canvas data-d="${d[0]}" width="150" height="232"></canvas><b>${d[1]}</b><small>${d[2]}</small></button>`).join("")}</div>
   ${PH.has(l.design)?`<div class="card" style="margin-top:12px"><div class="phr">${l.photo?`<img src="${l.photo}" alt="Cover photo">`:`<div class="nologo">No photo yet</div>`}<div><div class="row" style="margin:0"><label class="btn ghost file">${l.photo?"Replace photo":"Add cover photo"}<input type="file" accept="image/*" data-c="photo"></label>${l.photo?`<button class="btn ghost" data-a="nophoto">Remove</button>`:""}</div><p class="hint" style="margin-top:8px">A portrait or square photo works best. ${l.design=="arch"||l.design=="cross"||l.design=="bold"||l.design=="photo"?"Without one, this design shows generated art.":""}</p></div></div>${l.photo?`<div style="margin-top:12px"><div class="hint" style="margin:0 0 6px">Photo style</div>${seg(PT,l.pt||"natural","pt")}</div><div class="opt"><label class="chk"><input type="checkbox" data-c="l.pin" ${l.pin!==false?"checked":""}> Also use the photo as a banner inside</label></div>`:""}</div>`:""}
   ${artH}
   ${illH}
-  <h3 class="h3">Colors</h3><div class="card"><div class="sch">${SCHEMES.map((s,i)=>`<button class="schb ${l.accent.toLowerCase()==s[1]&&(l.hi||"").toLowerCase()==s[2]?"on":""}" data-a="sch" data-v="${i}" aria-label="${s[0]}"><span style="background:${s[1]}"></span><span style="background:${s[2]||s[1]}"></span><small>${s[0]}</small></button>`).join("")}</div>
+  \u0001<h3 class="h3">Colors</h3><div class="card"><div class="sch">${SCHEMES.map((s,i)=>`<button class="schb ${l.accent.toLowerCase()==s[1]&&(l.hi||"").toLowerCase()==s[2]?"on":""}" data-a="sch" data-v="${i}" aria-label="${s[0]}"><span style="background:${s[1]}"></span><span style="background:${s[2]||s[1]}"></span><small>${s[0]}</small></button>`).join("")}</div>
   <label class="fl">Primary color <small>fields, bands and frames</small></label><div class="sw8">${SWATCH.map(c=>`<button class="swt ${l.accent.toLowerCase()==c?"on":""}" style="--c:${c}" data-a="acc" data-v="${c}" aria-label="Primary ${c}"></button>`).join("")}<label class="swt cust ${SWATCH.includes(l.accent.toLowerCase())?"":"on"}" style="--c:${l.accent}" aria-label="Custom primary color"><input type="color" value="${l.accent}" data-c="l.accent"></label></div>
   <label class="fl" style="margin-top:12px">Accent color <small>rules, highlights and details</small></label><div class="sw8"><button class="swt same ${l.hi?"":"on"}" style="--c:${l.accent}" data-a="hi" data-v="" aria-label="Same as primary" title="Same as primary"></button>${SWATCH.concat(["#c9a24a","#c2562f","#d4a017","#b0436a"]).map(c=>`<button class="swt ${(l.hi||"").toLowerCase()==c?"on":""}" style="--c:${c}" data-a="hi" data-v="${c}" aria-label="Accent ${c}"></button>`).join("")}<label class="swt cust ${l.hi&&!SWATCH.concat(["#c9a24a","#c2562f","#d4a017","#b0436a"]).includes(l.hi.toLowerCase())?"on":""}" style="--c:${l.hi||l.accent}" aria-label="Custom accent color"><input type="color" value="${l.hi||l.accent}" data-c="l.hi"></label></div></div>
   <h3 class="h3">Typefaces</h3><div class="fonts">${Object.keys(FS).map(k=>{const f=FS[k];return `<button class="fcard ${l.font==k?"on":""}" data-a="fnt" data-v="${k}"><span style="font-family:'${f.d[0]}',Georgia,serif;font-weight:${f.d[1]}">${f.n}</span><small style="font-family:'${f.b[0]}',Georgia,serif">${f.d[0]} with ${f.b[0]}</small></button>`}).join("")}<button class="fcard ${l.font=="custom"?"on":""}" data-a="fnt" data-v="custom"><span style="font-family:'${esc(l.cf.d)}',Georgia,serif;font-weight:${l.cf.dw}">Custom</span><small style="font-family:'${esc(l.cf.b)}',Georgia,serif">${esc(l.cf.d)} with ${esc(l.cf.b)}</small></button></div>${l.font=="custom"?fontEditor():`<p class="hint" style="margin-top:8px">Choose Custom to use any Google Font or upload your own.</p>`}
-  <h3 class="h3">Text alignment</h3><div class="card">${seg([["left","Left"],["center","Center"],["right","Right"],["justify","Justified"]],l.align||"left","aln")}<p class="hint">Applies to paragraphs, headings and the sermon text. Any section can use its own alignment in This week. Events keep their date column.</p></div>
+  \u0002<h3 class="h3">Text alignment</h3><div class="card">${seg([["left","Left"],["center","Center"],["right","Right"],["justify","Justified"]],l.align||"left","aln")}<p class="hint">Applies to paragraphs, headings and the sermon text. Any section can use its own alignment in This week. Events keep their date column.</p></div>
   <h3 class="h3">Bulletin language</h3><div class="card"><select data-c="l.lang" aria-label="Bulletin language">${Object.keys(LANGS).map(k=>`<option value="${k}" ${(l.lang||"en")==k?"selected":""}>${LANGS[k].n}</option>`).join("")}</select><p class="hint">Changes the printed headings (Welcome, Announcements…), the date format and the QR label. Type your own text in any language. Scripture inserted from the built-in Bible is English (Berean Standard Bible); paste another translation into the section to use it. Please have a native speaker check the headings before printing.</p></div>
   <h3 class="h3">Text size</h3><div class="card">${seg([["std","Standard"],["large","Large print"]],l.size,"sz")}<p class="hint">Large print enlarges all text by about 14 percent. Long bulletins may shrink slightly to fit.</p></div>
-  ${sl?`<h3 class="h3">Cover</h3><div class="card">${seg([["light","Light"],["bold","Bold color"]],l.cover,"cov")}<p class="hint">Light covers print cleanly on any office printer. Bold covers suit commercial printing and digital use. The digital cover is always bold.</p></div>`:`<p class="hint" style="margin-top:18px">This design uses color to the edge of the page, so print it borderless or on a commercial printer. Editorial and Minimal have light covers that suit any office printer.</p>`}`}
+  ${sl?`<h3 class="h3">Cover</h3><div class="card">${seg([["light","Light"],["bold","Bold color"]],l.cover,"cov")}<p class="hint">Light covers print cleanly on any office printer. Bold covers suit commercial printing and digital use. The digital cover is always bold.</p></div>`:`<p class="hint" style="margin-top:18px">This design uses color to the edge of the page, so print it borderless or on a commercial printer. Editorial and Minimal have light covers that suit any office printer.</p>`}`;const pp=H.split(/[\u0001\u0002]/),k=S.lk||"design";return `<div class="sub">${seg([["design","Design"],["color","Colors & type"],["more","Details"]],k,"lk")}</div>`+(k=="design"?pp[0]:k=="color"?pp[1]:pp[2])}
+A.lk=v=>{S.lk=v;render();window.scrollTo(0,0)};
+
 async function thumbs(){const cs=document.querySelectorAll("canvas[data-d],canvas[data-art],canvas[data-ill]");if(!cs.length)return;await loadFonts();cs.forEach(cv=>{try{if(cv.dataset.art){const c=cv.getContext("2d"),k=cv.dataset.art,d=DB.l.design,kk=k=="auto"?(ART_AUTO[d]||"none"):k,lt=d=="poster"||d=="card";c.clearRect(0,0,cv.width,cv.height);if(kk=="none"){c.fillStyle=lt?tint(DB.l.accent,.1):DB.l.accent;c.fillRect(0,0,cv.width,cv.height)}else artFill(c,0,0,cv.width,cv.height,kk,{seed:artSeed(),light:lt});return}
     if(cv.dataset.ill){const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);drawIll(c,cv.dataset.ill,cv.width/2,cv.height/2,cv.width*.4,DB.l.accent,2.4);return}const pg=mkPage(396,612,cv.width/396);drawCover(pg,W(),{design:cv.dataset.d,bold:false});const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);c.drawImage(pg.cv,0,0,cv.width,cv.height)}catch(e){}})}
 A.dsn=v=>{const d=DESIGNS.find(x=>x[0]==v);DB.l.design=v;DB.l.font=d[3];persist();render(true)};
@@ -3076,18 +3141,28 @@ async function doLayout(){const el=$("pv");if(!el)return;const n=++relN;await lo
   const wn=$("warn");if(wn)wn.innerHTML=R.warn?`<div class="note">Some text doesn’t fit and is cut off. Turn off a section, shorten it, or ${DB.l.layout=="booklet"?"switch to Letter page.":DB.l.layout=="page"?"use a smaller text size.":"shorten the text."}</div>`:""}
 
 /* ---------- render ---------- */
+const ICN={"week": "<path d=\"M5 4h14v16H5z\"/><path d=\"M9 9h6M9 13h6M9 17h3\"/>", "church": "<path d=\"M12 3v5M10 5.5h4M4 21V13l8-5 8 5v8z\"/><path d=\"M10 21v-5h4v5\"/>", "look": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"9\" cy=\"10\" r=\"1.2\"/><circle cx=\"14\" cy=\"9\" r=\"1.2\"/><circle cx=\"15.5\" cy=\"13.5\" r=\"1.2\"/><path d=\"M12 20c-1.5 0-1.5-2 0-3 1-.7 2.5-.4 2.5 1.2\"/>", "prev": "<path d=\"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "more": "<circle cx=\"5\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"19\" cy=\"12\" r=\"1.3\"/>"};const svgi=k=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICN[k]}</svg>`;
 const TABS=[["week","This week"],["church","Church"],["look","Look"],["prev","Preview"]];
 function render(keepScroll){if(S.tab=="prev"&&matchMedia("(min-width:980px)").matches)S.tab="week";const y=window.scrollY,body=S.tab=="church"?churchTab():S.tab=="look"?lookTab():weekTab();
-  $("app").innerHTML=`<header class="top"><div class="brand"><b>Orderly</b><span>Church bulletins</span></div><button class="btn ghost hlp" data-a="help">Help</button></header>
+  $("app").innerHTML=`<header class="top"><div class="brand"><svg class="bmark" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#1f3a68"/><path d="M116 86H332L396 150V426H116Z" fill="#fff"/><g fill="#c9962b"><rect x="150" y="106" width="16" height="84" rx="3"/><rect x="132" y="128" width="52" height="15" rx="3"/></g><g fill="#1f3a68"><rect x="190" y="224" width="170" height="16" rx="8"/><rect x="190" y="274" width="130" height="16" rx="8"/><rect x="190" y="324" width="160" height="16" rx="8"/><rect x="190" y="374" width="100" height="16" rx="8"/></g></svg><b>Orderly</b><span>Church bulletins</span></div><button class="btn ghost hlp" data-a="help">Help</button></header>
   <nav class="tabs" role="tablist">${TABS.map(t=>`<button role="tab" class="${S.tab==t[0]?"on":""} ${t[0]=="prev"?"pvt":""}" data-a="tab" data-v="${t[0]}" aria-selected="${S.tab==t[0]}">${t[1]}</button>`).join("")}</nav>
+  <nav class="bnav" aria-label="Main">${TABS.map(t=>`<button class="${S.tab==t[0]&&!S.more?"on":""}" data-a="tab" data-v="${t[0]}" ${S.tab==t[0]?'aria-current="page"':""}>${svgi(t[0])}<span>${t[0]=="week"?"Week":t[1]}</span></button>`).join("")}<button class="${S.more?"on":""}" data-a="more" aria-expanded="${!!S.more}">${svgi("more")}<span>More</span></button></nav>${S.more?moreHtml():""}
   <div class="cols t-${S.tab}"><main class="edit">${S.tab=="prev"?"":body}</main><aside class="side">${pvPanel()}</aside></div>
   ${S.ov!=null?ovHtml():""}${S.mdl?mdlHtml():""}${S.cpt?`<div class="ov cpo" data-a="cptx"><div class="ovb" data-stop="1"><p>${esc(S.cpt.m)}</p><textarea id="cpt" readonly>${esc(S.cpt.t)}</textarea><button class="btn" data-a="cptx">Done</button></div></div>`:""}`;
   if(keepScroll)window.scrollTo(0,y);doLayout();if(S.tab=="look")thumbs();if(S.cpt){const x=$("cpt");if(x){x.focus();x.select()}}}
+function moreHtml(){const w=W(),it=(a,t,s)=>`<button class="mi" data-a="mact" data-v="${a}"><b>${t}</b>${s?`<small>${s}</small>`:""}</button>`,dg=DB.l.layout=="digital";
+  return `<div class="sheetbg" data-a="mclose"></div><div class="sheet" role="dialog" aria-label="Menu" data-stop="1"><div class="grab"></div><div class="shh"><b>${esc(DB.c.name||"Orderly")}</b><small>${esc(shortDate(w.date))} bulletin</small></div>
+  <h4>Export</h4>${dg?it("share",navigator.canShare?"Share slides":"Save slides","Send the slides to your phone or social apps")+it("zip","Download all (ZIP)","Every slide as an image"):it("pdf","Download PDF","Print-ready, 300 dpi")+it("zip","Images (ZIP)","One image per page")}${it("cptext","Copy as text","For email, a website or a text message")}
+  <h4>This bulletin</h4>${it("newwk","New week","Copy this one to the next Sunday")}${it("dupwk","Duplicate this bulletin","")}
+  <h4>Keep safe</h4>${it("bk","Download backup","Saved only in this browser, so back up often")}<label class="mi file"><b>Restore backup</b><small>Load a backup file</small><input type="file" accept=".json,application/json" data-c="rs"></label>
+  <h4>Help</h4>${it("help","Help and tips","")}<button class="btn ghost sclose" data-a="mclose">Close</button></div>`}
+A.setd=v=>{const w=W();w.date=addDays(nextSunday(),+v);persist();render(true)};
+A.more=()=>{S.more=!S.more;render(true)};A.mclose=()=>{S.more=false;render(true)};A.mact=v=>{S.more=false;render(true);setTimeout(()=>A[v](),30)};
 function ovHtml(){return `<div class="ov" data-a="ovx"><div class="ovb" data-stop="1"><img id="ovimg" alt="Page preview"><div class="row"><button class="btn" data-a="ovsave">Save image</button><button class="btn ghost" data-a="ovx">Close</button></div></div></div>`}
 async function fillOv(){const i=S.ov;await loadFonts();const R=build(DB.l.layout,3),p=R.pages[i];if(!p)return;const im=$("ovimg");if(im)im.src=p.cv.toDataURL("image/png");S.ovName=slug(DB.c.name)+"-"+slug(p.label)+".png";S.ovBlob=await new Promise(r=>p.cv.toBlob(r,"image/png"))}
 
 /* ---------- actions ---------- */
-A.tab=v=>{S.tab=v;S.del=false;render();window.scrollTo(0,0)};
+A.tab=v=>{S.more=false;S.tab=v;S.del=false;render();window.scrollTo(0,0)};
 A.lay=v=>{DB.l.layout=v;persist();render(true)};A.pst=v=>{DB.l.pstyle=v;persist();render(true)};
 A.aln=v=>{DB.l.align=v;persist();render(true)};A.sz=v=>{DB.l.size=v;persist();render(true)};A.cov=v=>{DB.l.cover=v;persist();render(true)};A.fnt=async v=>{DB.l.font=v;persist();render(true);if(v=="custom"){await ensureCustom();render(true)}};
 A.cfds=v=>{DB.l.cf.ds=+v;persist();render(true)};A.cfbs=v=>{DB.l.cf.bs=+v;persist();render(true)};
@@ -3209,7 +3284,7 @@ A.mdlx=()=>{S.mdl=null;render(true)};
 A.help=()=>{S.mdl={k:"help"};render(true)};
 function mdlHtml(){return `<div class="ov" data-a="mdlx"><div class="ovb mdl" data-stop="1" role="dialog" aria-label="Help">${HELP}<div class="row"><button class="btn" data-a="mdlx">Close</button></div></div></div>`}
 const HELP=`<h2>Orderly help</h2>
-<h4>Make a bulletin in five steps</h4><ol><li><b>Church</b> tab: add your church name, address, service times, website and logo once. They carry into every bulletin.</li><li><b>This week</b> tab: set the date, theme and sermon, then fill in the order of service, announcements and events.</li><li><b>Look</b> tab: pick a design, accent color and fonts. Choose a layout: booklet, tri-fold, letter page or digital slides.</li><li><b>Preview</b>: check every page. Look over each page, especially the date and any empty sections.</li><li><b>Download PDF</b> and print, or save the slides for the screen.</li></ol>
+<h4>Make a bulletin in five steps</h4><ol><li><b>Church</b> tab: add your church name, address, service times, website and logo once. They carry into every bulletin.</li><li><b>This week</b> tab: set the date, theme and sermon, then fill in the order of service, announcements and events.</li><li><b>Look</b> tab: pick a design, your primary and accent colors, and fonts. Choose a layout: booklet, tri-fold, letter page or digital slides.</li><li><b>Preview</b>: check every page. Look over each page, especially the date and any empty sections.</li><li><b>Download PDF</b> and print, or save the slides for the screen.</li></ol>
 <h4>Every week</h4><p>Use <b>New week</b> in This week. It copies the current bulletin forward, moves the date a week ahead, clears the sermon, theme and prayer requests, and drops events that have passed. In Events, <b>Paste a list of events</b> adds several at once, one per line: <i>Sat, Nov 15 - Men’s breakfast - 8:00 AM</i>.</p>
 <h4>Printing</h4><ul><li><b>Booklet</b>: print the PDF double-sided on letter paper, landscape, <b>flip on the short edge</b>, then fold in half. No page is split across pages, and the sermon always gets its own page.</li><li><b>Tri-fold</b>: print double-sided on letter paper, landscape, flip on the short edge, then fold in thirds.</li><li><b>Letter page</b>: a normal one-sided or two-sided page.</li><li><b>Digital slides</b>: save the images and post them or show them on a screen.</li><li>Print at 100% (“actual size”), not “fit to page”. Bold color covers print edge to edge, so they suit a print shop.</li><li><b>For a print shop</b>: tick <b>Add crop marks and bleed to the PDF</b> under the download buttons. It adds 1/8 inch of bleed plus crop and fold marks, and each sheet grows by 1 inch, so print on tabloid (11 × 17) or larger and trim.</li></ul>
 <h4>Tips</h4><ul><li>A photo-capable design (Photo, Bold, Cross, Arch) can use your own photo on the cover and as a banner inside. Portrait or square photos work best.</li><li><b>Large print</b> is in Look, Text size. Long bulletins may shrink slightly to fit.</li><li>Bulletin language changes headings and dates (Spanish, French, Portuguese, German). Scripture from the built-in Bible stays English.</li><li>The website address becomes the QR code on the back. Turn it off in Church if you don’t want it.</li></ul>
