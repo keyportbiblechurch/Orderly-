@@ -2447,7 +2447,7 @@ function sampleWeek(date){const S=k=>newSec(k);const w={id:uid(),date,theme:"",s
   const gi=S("giving");gi.text="Give online or place your gift in the box at the back. Everything given supports the ministry of our church and our missions partners.";
   const co=S("connect");co.text="New here? Fill out a connect card and hand it to anyone wearing a lanyard, or stop by the welcome table after the service.";
   w.secs=[wel,od,se,an,ev,pr,gi,co];return w}
-const DEF={c:{name:"Keyport Bible Church",tag:"Know Christ. Make Him known.",addr:"Keyport, Washington",phone:"",email:"",web:"keyportbible.org",qr:true,times:[{d:"Sunday",t:"10:00 AM",n:"Worship service"}],logo:""},
+const DEF={c:{name:"Your Church Name",tag:"",addr:"123 Main Street, Your Town",phone:"",email:"",web:"",qr:true,times:[{d:"Sunday",t:"10:00 AM",n:"Worship service"}],logo:""},
   l:{layout:"booklet",design:"editorial",photo:"",accent:"#1f3a68",hi:"",font:"classic",size:"std",cover:"light",align:"left",pstyle:"columns",cf:{d:"Playfair Display",dw:700,b:"Lora",ds:1,bs:1},up:[],gf:[],art:"auto",ill:"none",pt:"natural",seed:0,pack:""}};
 const KEY="folio.v1";
 function loadDB(){try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.weeks&&r.weeks.length)return{c:Object.assign({},DEF.c,r.c),l:Object.assign({},DEF.l,r.l),weeks:r.weeks,cur:r.cur}}catch(e){}
