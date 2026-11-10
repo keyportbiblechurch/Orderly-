@@ -46,7 +46,7 @@ function sampleWeek(date){const S=k=>newSec(k);const w={id:uid(),date,theme:"",s
   const co=S("connect");co.text="New here? Fill out a connect card and hand it to anyone wearing a lanyard, or stop by the welcome table after the service.";
   w.secs=[wel,od,se,an,ev,pr,gi,co];return w}
 const DEF={c:{name:"Keyport Bible Church",tag:"Know Christ. Make Him known.",addr:"Keyport, Washington",phone:"",email:"",web:"keyportbible.org",qr:true,times:[{d:"Sunday",t:"10:00 AM",n:"Worship service"}],logo:""},
-  l:{layout:"booklet",design:"editorial",photo:"",accent:"#1f3a68",font:"classic",size:"std",cover:"light",align:"left",pstyle:"columns",cf:{d:"Playfair Display",dw:700,b:"Lora",ds:1,bs:1},up:[],gf:[],art:"auto",ill:"none",pt:"natural",seed:0,pack:""}};
+  l:{layout:"booklet",design:"editorial",photo:"",accent:"#1f3a68",hi:"",font:"classic",size:"std",cover:"light",align:"left",pstyle:"columns",cf:{d:"Playfair Display",dw:700,b:"Lora",ds:1,bs:1},up:[],gf:[],art:"auto",ill:"none",pt:"natural",seed:0,pack:""}};
 const KEY="folio.v1";
 function loadDB(){try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.weeks&&r.weeks.length)return{c:Object.assign({},DEF.c,r.c),l:Object.assign({},DEF.l,r.l),weeks:r.weeks,cur:r.cur}}catch(e){}
   const w=sampleWeek(nextSunday());return{c:JSON.parse(JSON.stringify(DEF.c)),l:Object.assign({},DEF.l),weeks:[w],cur:w.id}}
@@ -60,6 +60,7 @@ const FS={
  modern:{n:"Modern",d:["DM Serif Display",400],b:["DM Sans",400],l:["DM Sans",600],ds:1,bs:.97},
  traditional:{n:"Traditional",d:["Libre Baskerville",700],b:["Source Serif 4",400],l:["Source Sans 3",600],ds:.9,bs:1},
  clean:{n:"Clean",d:["Manrope",700],b:["Manrope",400],l:["Manrope",700],ds:.92,bs:.95}};
+const SCHEMES=[["Navy & gold","#1f3a68","#c9a24a"],["Forest & cream","#2f5d46","#c9a24a"],["Burgundy & gold","#7a2e3a","#c9a24a"],["Slate & coral","#3d4a5c","#c2562f"],["Teal & amber","#1f6f78","#d4a017"],["Plum & rose","#5b3f86","#b0436a"],["Classic navy","#1f3a68",""],["Charcoal","#1a1a1a",""]];
 const SWATCH=["#1f3a68","#2f5d46","#7a2e3a","#3d4a5c","#8a5a2b","#1f6f78","#5b3f86","#1a1a1a"];
 const INK="#1c1f26",MUTE="#646a76",RULE="#d3d7de";
 const FB='Georgia, "Times New Roman", serif';
@@ -79,7 +80,7 @@ const mw=(t,font)=>{sc.font=font;return sc.measureText(t).width};
 function fit1(t,font,w){if(mw(t,font)<=w)return t;let s=t;while(s.length>1&&mw(s+"…",font)>w)s=s.slice(0,-1);return s.trimEnd()+"…"}
 
 function ctxOf(L){ // style context for rows
-  const f=fontSet(L.font),base=L.s;return{f,s:base,bs:base*f.bs,ds:f.ds,acc:L.accent,design:L.design,
+  const f=fontSet(L.font),base=L.s;return{f,s:base,bs:base*f.bs,ds:f.ds,acc:L.accent,hi:HT(L.hi||L.accent),design:L.design,
     body:(sz,wt,it)=>fnt(wt||400,sz,f.b,it),disp:sz=>fnt(f.d[1],sz,f.d),lab:sz=>fnt(f.l[1],sz,f.l)}}
 
 function T(t,o){const jf=o.align=="justify";let lines;
@@ -101,7 +102,7 @@ function verseRows(X,ps,sz,w,al){const f=X.body(sz),nf=X.lab(sz*.62),lh=sz*1.4,s
   return lines.map((L,li)=>{const la=L[L.length-1],lw=la?la.x+(la.n?mw(la.t,nf)+sz*.14:mw(la.t,f)):0,isLast=li==lines.length-1;
     return{h:lh,draw(c,x0,y,ww){c.textBaseline="alphabetic";c.textAlign="left";const bl=y+lh*.5+sz*.32;let off=0,sh=null;
       if(al=="center")off=(ww-lw)/2;else if(al=="right")off=ww-lw;else if(al=="justify"&&!isLast&&L.length>1){let g=0;for(let q=1;q<L.length;q++)if(!L[q-1].n)g++;const ex=g?(ww-lw)/g:0;if(g&&ex>=0&&ex<=sp*3){sh=[];let acc=0;L.forEach((r,q)=>{if(q>0&&!L[q-1].n)acc+=ex;sh.push(acc)})}}
-      L.forEach((r,q)=>{const px=x0+r.x+off+(sh?sh[q]:0);if(r.n){c.font=nf;c.fillStyle=X.acc;c.fillText(r.t,px,bl-sz*.3)}else{c.font=f;c.fillStyle=INK;c.fillText(r.t,px,bl)}})}}})}
+      L.forEach((r,q)=>{const px=x0+r.x+off+(sh?sh[q]:0);if(r.n){c.font=nf;c.fillStyle=X.hi;c.fillText(r.t,px,bl-sz*.3)}else{c.font=f;c.fillStyle=INK;c.fillText(r.t,px,bl)}})}}})}
 
 /* ---------- Section rows ---------- */
 function secRows(X,sec,w,wk){const s=X.bs,lh=s*1.42,R=[];const body=X.body(s),mute=MUTE,al=sec.al||DB.l.align||"left",al2=al=="justify"?"left":al;
@@ -118,7 +119,7 @@ function secRows(X,sec,w,wk){const s=X.bs,lh=s*1.42,R=[];const body=X.body(s),mu
     if(sec.title)R.push(...kp(T(sec.title,{font:X.disp(s*1.75*X.ds),color:INK,size:s*1.75*X.ds,lh:s*1.75*X.ds*1.15,w,align:al2})));
     const sub=[sec.speaker,sec.series].filter(Boolean).join("  ·  ");if(sub)R.push(...kp(T(sub,{font:X.body(s*.98,400,true),color:mute,size:s,lh,w,align:al2})));
     const ps=passage(sec.ref);
-    if(sec.ref.trim()){const g1=gap(s*.35);g1.keep=true;R.push(g1,...kp(T(ps?ps.ref:sec.ref,{font:X.lab(s*.86),color:X.acc,size:s*.86,lh,w,align:al2})));
+    if(sec.ref.trim()){const g1=gap(s*.35);g1.keep=true;R.push(g1,...kp(T(ps?ps.ref:sec.ref,{font:X.lab(s*.86),color:X.hi,size:s*.86,lh,w,align:al2})));
       if(ps&&sec.showText){const g2=gap(s*.2);g2.keep=true;R.push(g2,...verseRows(X,ps,s*.98,w,al),...T("Berean Standard Bible (public domain)",{font:X.body(s*.72,400,true),color:mute,size:s*.72,lh:s*1.2,w,align:al2}))}}
     if(sec.lines!=0){R.push(gap(s*.5));const nr=T(tr("notes"),{font:X.lab(s*.72),color:mute,size:s*.72,lh:s*1.3,w});nr.forEach(r=>r.keep=true);R.push(...nr);const st=lh*1.35,n=sec.lines>0?sec.lines:3;R.push({h:st*n,fill:sec.lines<0,draw(c,x,y,w,hh){const cnt=sec.lines<0?Math.max(3,Math.floor((hh||st*n)/st)):n;c.strokeStyle=RULE;c.lineWidth=.6;for(let i=0;i<cnt;i++){c.beginPath();c.moveTo(x,y+lh*1.2+i*st);c.lineTo(x+w,y+lh*1.2+i*st);c.stroke()}}})}
     R.push(gap(s*.6))}
@@ -126,10 +127,10 @@ function secRows(X,sec,w,wk){const s=X.bs,lh=s*1.42,R=[];const body=X.body(s),mu
     it.forEach(i=>{if((i.h||"").trim())R.push(...T(i.h.trim(),{font:X.body(s,700),color:INK,size:s,lh,w,align:al2}));if((i.b||"").trim())R.push(...T(i.b.trim(),{font:body,color:INK,size:s,lh,w,align:al}));R.push(gap(s*.45))})}
   else if(sec.k=="events"){const it=sec.items.filter(i=>(i.h||"").trim());if(!it.length)return R;R.push(head(X,tr("events"),al));const dw=Math.min(w*.3,Math.max(52,w*.26));
     it.forEach(i=>{const hl=T(i.h.trim(),{font:X.body(s,700),color:INK,size:s,lh,w:w-dw-8}),bl=(i.b||"").trim()?T(i.b.trim(),{font:body,color:mute,size:s*.96,lh,w:w-dw-8}):[],ds=wrapT((i.d||"").trim(),X.lab(s*.82),dw);
-      const rows=[...hl,...bl];rows.forEach((r,ix)=>{const o=r.draw,dl=ix==0?ds:[];r.draw=(c,x,y,ww)=>{o(c,x+dw+8,y,ww-dw-8);dl.forEach((l,j)=>{c.font=X.lab(s*.82);c.fillStyle=X.acc;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(l,x,y+lh*.5+s*.3+j*lh*.9)})}});
+      const rows=[...hl,...bl];rows.forEach((r,ix)=>{const o=r.draw,dl=ix==0?ds:[];r.draw=(c,x,y,ww)=>{o(c,x+dw+8,y,ww-dw-8);dl.forEach((l,j)=>{c.font=X.lab(s*.82);c.fillStyle=X.hi;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(l,x,y+lh*.5+s*.3+j*lh*.9)})}});
       if(ds.length>rows.length)for(let q=rows.length;q<ds.length;q++)rows.push({h:lh*.9,draw(){}});R.push(...rows,gap(s*.4))})}
   else if(sec.k=="prayer"){const ls=sec.text.split("\n").map(x=>x.trim()).filter(Boolean);if(!ls.length)return R;R.push(head(X,tr("prayer"),al));const bul=al=="left"||al=="justify";
-    ls.forEach(l=>{const rs=T(l,{font:body,color:INK,size:s,lh,w,ind:bul?s*1.1:0,align:al});rs.forEach((r,i)=>{if(i==0&&bul){const o=r.draw;r.draw=(c,x,y,ww)=>{o(c,x,y,ww);c.fillStyle=X.acc;c.beginPath();c.arc(x+s*.32,y+lh*.5,s*.15,0,6.29);c.fill()}}});R.push(...rs)});R.push(gap(s*.5))}
+    ls.forEach(l=>{const rs=T(l,{font:body,color:INK,size:s,lh,w,ind:bul?s*1.1:0,align:al});rs.forEach((r,i)=>{if(i==0&&bul){const o=r.draw;r.draw=(c,x,y,ww)=>{o(c,x,y,ww);c.fillStyle=X.hi;c.beginPath();c.arc(x+s*.32,y+lh*.5,s*.15,0,6.29);c.fill()}}});R.push(...rs)});R.push(gap(s*.5))}
   else if(sec.k=="giving"||sec.k=="connect"||sec.k=="custom"){const h=sec.k=="custom"?(sec.h||"").trim():tr(sec.k);if(!sec.text.trim())return R;if(h)R.push(head(X,h,al));R.push(...para(sec.text),gap(s*.5))}
   return R}
 
@@ -154,7 +155,9 @@ const churchLine=()=>[DB.c.name,DB.c.addr,webShow(DB.c.web)].filter(Boolean).joi
 
 /* ---------- Layouts ---------- */
 const SIZES={std:1,large:1.14};
-function styleOf(base){return ctxOf({font:DB.l.font,accent:DB.l.accent,design:DB.l.design,s:base})}
+function HI(){return DB.l.hi||DB.l.accent}
+function HT(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16),l=(.299*r+.587*g+.114*b)/255;if(l<=.62)return h;const k=.62/l;return"#"+[r,g,b].map(v=>("0"+Math.round(v*k).toString(16)).slice(-2)).join("")}
+function styleOf(base){return ctxOf({font:DB.l.font,accent:DB.l.accent,hi:DB.l.hi,design:DB.l.design,s:base})}
 function insideSecs(wk){return wk.secs.filter(s=>s.on&&!BACK[s.k])}
 function backSecs(wk){return wk.secs.filter(s=>s.on&&BACK[s.k])}
 function title4(wk){const se=wk.secs.find(s=>s.k=="sermon"&&s.on);return (wk.theme||"").trim()||(se&&se.title)||tr("worship")}
@@ -164,12 +167,13 @@ function drawBack(pg,wk,s,warn,pre){const c=pg.c,Wp=pg.W,Hp=pg.H,nar=Wp<300,m=na
   const tl=timesList(),blockH=nar?148:150;
   const rows=pre?pre.slice():[];if(!pre)backSecs(wk).forEach(sec=>rows.push(...secRows(X,sec,w,wk)));
   let used=0;const r=flow(rows,()=>used++?null:{c,x:m,y:m,w,h:Hp-2*m-blockH-10});if(r)warn.push(r);
+  {const top=m+hOf(rows),free=Hp-m-blockH-2-top,tg=(DB.c.tag||"").trim();if(!r&&tg&&DB.c.btag!==false&&free>(nar?120:130)){const sz=(nar?12.5:15)*X.f.bs,f=X.body(sz,400,true);c.font=f;const ls=wrapT(tg,f,w*(nar?.9:.78)),lh=sz*1.4,bh=20+ls.length*lh,y0=top+(free-bh)*.5+4;ornament(c,Wp/2,y0,nar?30:40,DB.l.accent,.8);c.textAlign="center";c.fillStyle=MUTE;c.textBaseline="alphabetic";ls.forEach((l,i)=>c.fillText(l,Wp/2,y0+22+i*lh));c.textAlign="left"}}
   // info block
   const by=Hp-m-blockH+6;c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(m,by-8);c.lineTo(Wp-m,by-8);c.stroke();
   const qs=nar?64:86,url=webUrl(DB.c.web),showQ=!!url&&DB.c.qr!==false,tw=w-(showQ?qs+20:0);let ix=m;
   c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*X.ds);c.fillStyle=INK;c.fillText(DB.c.name,m,by+14);
-  let y=by+32;c.font=X.lab(7.5);const lw=drawLogo(c,Wp-m-60,by-2,60,34,"right",{cap:1.5});
-  labelTxt(c,tr("join").toUpperCase(),m,y,X.lab(7.2),DB.l.accent,1.4);y+=13;
+  let y=by+32;c.font=X.lab(7.5);
+  labelTxt(c,tr("join").toUpperCase(),m,y,X.lab(7.2),X.hi,1.4);y+=13;
   tl.slice(0,4).forEach(t=>{c.font=X.body(9.2*X.f.bs);c.fillStyle=INK;c.fillText(fit1([t.d,t.t].filter(Boolean).join("  "),X.body(9.2*X.f.bs),tw)+(t.n?"  ·  "+t.n:""),m,y);y+=12.2});
   y+=3;[DB.c.addr,DB.c.phone,DB.c.email,webShow(DB.c.web)].filter(Boolean).forEach(l=>{c.font=X.body(8.8*X.f.bs);c.fillStyle=MUTE;c.fillText(fit1(l,X.body(8.8*X.f.bs),tw),m,y);y+=11.4});
   if(showQ){qrDraw(c,url,Wp-m-qs,Hp-m-qs-12,qs,INK);c.font=X.lab(6.4);c.fillStyle=MUTE;c.textAlign="right";try{c.letterSpacing="1px"}catch(e){}c.fillText(tr("scan").toUpperCase(),Wp-m,Hp-m+2);try{c.letterSpacing="0px"}catch(e){}c.textAlign="left"}}
@@ -234,10 +238,11 @@ function buildPage(k,wk,warn){const ser=sermonOf(wk),Wp=612,Hp=792,m=44,cg=26,cw
     for(const f of [1,.95,.91,.87,.83,.8]){const X=styleOf(base*f),mr=[],sr=[];mSecs.forEach(x=>mr.push(...secRows(X,x,mainW,wk)));sSecs.forEach(x=>sr.push(...secRows(X,x,sbIn,wk)));let u1=0,u2=0;if(!flow(mr,()=>u1++?null:{h:hh},true)&&!flow(sr,()=>u2++?null:{h:hh-28},true)){sb={mr,sr,y0,hh,f};break}}}
   const colH=p=>Hp-(p==0?m+topH:m)-m-foot+10,mk=sz=>{const X=styleOf(sz);return oSecs.map(sec=>{const rows=secRows(X,sec,cw,wk);return grp(rows)}).filter(g=>g.rows.length)};
   const hsOf=n=>{const o=[];for(let p=0;p<n;p++)for(let c=0;c<2;c++)o.push(colH(p));return o};
-  let nO=0,P={out:[]},probe=mk(base);
+  let nO=0,fb=1,P={out:[]},probe=mk(base);
   if(sb){nO=1;P={out:[]};probe=[1]}
-  else if(probe.length){let done=false;for(let n=1;n<=maxP&&!done;n++){const fs=n==1?[1,.95,.91]:n<maxP?[1,.95,.9,.86,.82]:[1,.95,.9,.86,.82,.78,.74,.7];for(const f of fs){P=packGroups(mk(base*f),hsOf(n));nO=n;if(!P.fail){done=true;break}}}
-    if(!done)for(const f of [.7,.66,.62,.58]){P=packLoose(mk(base*f),hsOf(maxP),-1);nO=maxP;if(!P.fail)break}}
+  else if(probe.length){let done=false;for(let n=1;n<=maxP&&!done;n++){const fs=n==1?[1.3,1.22,1.15,1.08,1,.95,.91]:n<maxP?[1,.95,.9,.86,.82]:[1,.95,.9,.86,.82,.78,.74,.7];for(const f of fs){P=packGroups(mk(base*f),hsOf(n));nO=n;fb=f;if(!P.fail){done=true;break}}}
+    if(!done)for(const f of [.7,.66,.62,.58]){P=packLoose(mk(base*f),hsOf(maxP),-1);nO=maxP;fb=f;if(!P.fail)break}
+    if(nO==1&&!P.fail&&P.out[1]){const gs=mk(base*fb),tot=gs.reduce((a,g)=>a+g.H-g.T,0);for(let h=Math.max(Math.ceil(tot/2),60);h<colH(0);h+=5){const Q=packGroups(gs,[h,h]);if(!Q.fail){P=Q;break}}}}
   const sw=Math.min(Wp-2*m,430),sx=(Wp-sw)/2,sy=probe.length?m:m+topH,sh=Hp-sy-m-foot+10;let sRows=[];
   if(ser)for(const f of [1.2,1.12,1.05,1,.94,.88,.82,.76,.7]){sRows=secRows(styleOf(base*f),ser,sw,wk);let u=0;if(!flow(sRows,()=>u++?null:{h:sh},true))break}
   const pgs=[];for(let i=0;i<nO+1;i++){const pp=mkPage(Wp,Hp,k);if(!(hero&&i==0))decor(pp,"page");pgs.push(pp)}if(bnd)photoBand(pgs[0].c,m,m+84,Wp-2*m,80);

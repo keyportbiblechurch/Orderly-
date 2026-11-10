@@ -7,6 +7,7 @@ A free church bulletin maker for print and digital. Pick a design, fill in the w
 - **Formats:** 4-page booklet (prints on one folded sheet), letter page, tri-fold, and digital slides.
 - **Ten designs**, seasonal packs, generated cover art, line illustrations, photo treatments, Google or custom fonts.
 - **Built for weekly use:** new week in one click, past events drop off, paste a list of events, sermon always on its own page, no section is ever split across pages.
+- **Print shop ready:** optional 1/8 inch bleed plus crop and fold marks on the PDF.
 - **Languages:** printed headings and dates in English, Spanish, French, Portuguese and German (add more in `src/i18n.js`).
 - **Photos:** a cover photo can also run as a banner on the inside pages. A built-in Help page explains printing and weekly use.
 - **Private:** runs entirely in your browser. Nothing is uploaded and there are no accounts. Your bulletins are saved on your own device; use the backup button to move them to another computer.
@@ -26,3 +27,6 @@ Edit the files in `src/` (`i18n.js`, `engine.js`, `art.js`, `fonts.js`, `designs
 
 ## License
 MIT. Free to use, share and adapt. Made as a free ministry tool.
+
+## Install on a phone
+Open the GitHub Pages address in Safari (iPhone: Share → Add to Home Screen) or Chrome (Android: menu → Install app). The icon comes from `assets/apple-touch-icon.png` and `manifest.webmanifest`.
