@@ -220,3 +220,5 @@ input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 
 @media (max-width:979px){.top{padding-top:calc(18px + env(safe-area-inset-top,0px))}.brand b{font-size:28px}.brand span{display:none}}
 .it>input:first-child:not(.sm){flex:3 1 0}.it>input:nth-child(2):not(.sm){flex:2 1 0}
 .it>input:nth-child(2):not(.sm):not(:last-of-type){color:var(--mu)}
+.qrx{margin-top:4px;padding-top:14px;border-top:1px solid var(--ln)}.qrx .fl small{font-weight:400;color:var(--mu);display:block}
+.qrx.full .add{display:none}
