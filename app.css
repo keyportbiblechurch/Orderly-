@@ -236,3 +236,11 @@ input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 
 .items>.it.drag{padding:6px 4px;border:1px solid var(--ac)}
 .secs.dragging,.items.dragging{user-select:none;-webkit-user-select:none}
 .secs.dragging .sec:not(.drag),.items.dragging .it:not(.drag){transition:none}
+
+.fx{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
+.fx .btn.sm{padding:6px 12px;font-size:13px;min-height:0}
+.fx .fxt{width:44px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--ln)}
+.fx .lnk{background:none;border:0;color:var(--mu);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:4px}
+.fx select{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--ln);background:var(--sf);color:inherit}
+.it.col .fx{padding-right:0}
+.fx select{width:auto;min-height:0;flex:0 0 auto}
