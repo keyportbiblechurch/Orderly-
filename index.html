@@ -2988,7 +2988,8 @@ function coverFrame(c,W,H,u,d,fr,hasQ,bold){if(!fr||fr=="none"||d=="traditional"
   else ring(0,0,W,H,hi)}
 function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styleOf(10),d=o.design||DB.l.design,acc=DB.l.accent,m=38*u;
   const CV=DB.l.cv||{},TS={s:.82,m:1,l:1.15,xl:1.3}[CV.ts||"m"]||1,dy=Hp*({hi:-.07,mid:0,lo:.08}[CV.pos||"mid"]||0),ctr=CV.al=="center",tt=CV.caps=="on"?title4(wk).toUpperCase():title4(wk),se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
-  const subL=CV.sub=="off"?"":(se?((wk.theme||"").trim()&&se.title?se.title+"  ·  ":"")+(p?p.ref:se.ref):"")+(o.digital&&se&&se.speaker?"  ·  "+se.speaker:"");
+  const sv=wk.secs.find(s=>s.k=="sermon"&&s.on&&((s.ref||"").trim()||(s.title||"").trim())),svBody=sv?[(wk.theme||"").trim()?sv.title:"",(sv.ref||"").trim()?(p?p.ref:sv.ref):"",o.digital?sv.speaker:""].filter(Boolean).join("  ·  "):"";
+  const subL=CV.sub=="off"||!sv?"":fit1(tr("sermon")+(svBody?": "+svBody:""),X.body(12*u*X.f.bs,400,true),Wp-2*m);
   const dateL=CV.dt=="none"?"":CV.dt=="short"?new Date(wk.date+"T12:00:00").toLocaleDateString(dloc(),{weekday:"short",month:"short",day:"numeric"}):longDate(wk.date),fit=(max,min,w,ml)=>{max*=TS;min*=Math.min(1,TS);let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
   let tb=0;const hasQ=!!coverQuote(),ill=DB.l.ill&&DB.l.ill!="none"?DB.l.ill:null;const dispT=(L,sz,x,y,col,al)=>{tb=Math.max(tb,y+(L.length-1)*sz*1.1+sz*.25);c.font=X.disp(sz);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";L.forEach((l,i)=>c.fillText(l,x,y+i*sz*1.1));c.textAlign="left"};
   const ital=(t,sz,x,y,col,al)=>{if(y<Hp*.88)tb=Math.max(tb,y+sz*.3);c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";c.fillText(t,x,y);c.textAlign="left"};
