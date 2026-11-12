@@ -204,10 +204,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
 .chip{background:var(--bg);border:1px solid var(--ln);border-radius:999px;padding:7px 14px;font:500 13px var(--ui);color:var(--ink);min-height:36px;cursor:pointer}
 .chip:hover{border-color:var(--ac)}
 .datel{margin:0 0 14px;font:500 17px var(--se);color:var(--ink)}
-.it:has(input.sm~input.sm){display:grid;grid-template-columns:1fr 1fr 34px;gap:6px}
+.it:has(input.sm~input.sm){display:grid;grid-template-columns:22px 1fr 1fr 34px;gap:6px}
 .it:has(input.sm~input.sm) input.sm{flex:none}
-.it:has(input.sm~input.sm) .x{grid-column:3;grid-row:1}
-.it:has(input.sm~input.sm) input:not(.sm){grid-column:1/3;grid-row:2}
+.it:has(input.sm~input.sm) .x{grid-column:4;grid-row:1}.it:has(input.sm~input.sm)>.grip{grid-column:1;grid-row:1}
+.it:has(input.sm~input.sm) input:not(.sm){grid-column:2/4;grid-row:2}
 .two>.fl:last-child{margin-bottom:14px}.card>.fl:last-child,.card>.two:last-child>.fl{margin-bottom:0}
 
 /* ---- elegance pass ---- */
@@ -238,6 +238,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 
 .it>input:nth-child(2):not(.sm):not(:last-of-type){color:var(--mu)}
 .qrx{margin-top:4px;padding-top:14px;border-top:1px solid var(--ln)}.qrx .fl small{font-weight:400;color:var(--mu);display:block}
 .qrx.full .add{display:none}
+
+.cvcard{display:grid;gap:18px}.cvp{width:100%;max-width:230px;height:auto;justify-self:center;border-radius:6px;box-shadow:var(--sh);background:#fff}
+.cvrow{margin:14px 0 6px}.cvrow small{display:block;font-weight:400;color:var(--mu);margin-top:2px}.cvopts .seg{flex-wrap:wrap}
+@media (min-width:640px){.cvcard{grid-template-columns:230px 1fr;align-items:start}.cvp{justify-self:start}.cvopts .cvrow:first-child{margin-top:0}}
+
+/* drag handles */
+.grip{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:34px;padding:0;border:0;background:none;color:var(--mu);cursor:grab;touch-action:none;border-radius:8px;opacity:.7}
+.grip:hover,.grip:focus-visible{opacity:1;color:var(--ink);background:var(--bg)}.grip:focus-visible{outline:2px solid var(--ac)}
+.grip:active{cursor:grabbing}
+.it>.grip{width:22px;margin-left:-4px}.it.col>.grip{align-self:flex-start;margin-top:4px}
+.drag{position:relative;z-index:30;box-shadow:0 14px 36px -8px rgba(20,28,40,.35);background:var(--sf);border-radius:var(--r);opacity:.98}
+.items>.it.drag{padding:6px 4px;border:1px solid var(--ac)}
+.secs.dragging,.items.dragging{user-select:none;-webkit-user-select:none}
+.secs.dragging .sec:not(.drag),.items.dragging .it:not(.drag){transition:none}
 
 </style>
 </head>
@@ -2937,10 +2951,17 @@ function coverIll(pg,d,o){const k=DB.l.ill;if(!k||k=="none")return;const c=pg.c,
   else if(d=="editorial"||d=="minimal"||d=="split")drawIll(c,k,Wp-m-24*u,m+22*u,24*u,bd&&d!="split"?"#fff":acc,1.3*u,.95)}
 function lblW(c,txt,font,sp){c.font=font;try{c.letterSpacing=(sp||0)+"px"}catch(e){}const w=c.measureText(txt).width;try{c.letterSpacing="0px"}catch(e){}return w}
 function labelC(c,txt,cx,y,font,color,sp){const w=lblW(c,txt,font,sp);c.textAlign="left";labelTxt(c,txt,cx-w/2+ (sp||0)/2,y,font,color,sp);return w}
+function coverFrame(c,W,H,u,d,fr,hasQ,bold){if(!fr||fr=="none"||d=="traditional"||d=="card")return;const ins=14*u;
+  const ring=(x0,y0,x1,y1,col)=>{c.save();c.beginPath();c.rect(x0,y0,x1-x0,y1-y0);c.clip();c.strokeStyle=col;c.lineWidth=.9*u;c.strokeRect(ins,ins,W-2*ins,H-2*ins);if(fr=="double"){c.lineWidth=.5*u;c.strokeRect(ins+4*u,ins+4*u,W-2*ins-8*u,H-2*ins-8*u)}c.restore()};
+  const hi=HI(),wh="rgba(255,255,255,.9)",blk=d=="bold"||(d=="photo"&&!photoImg())?H*.64:d=="cross"?H*(hasQ?.45:.54):0;
+  if(blk){ring(0,0,W,blk,wh);ring(0,blk,W,H,hi)}
+  else if(d=="photo"||((d=="editorial"||d=="minimal")&&bold))ring(0,0,W,H,wh);
+  else if(d=="split"){ring(0,0,58*u,H,wh);ring(58*u,0,W,H,hi)}
+  else ring(0,0,W,H,hi)}
 function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styleOf(10),d=o.design||DB.l.design,acc=DB.l.accent,m=38*u;
-  const tt=title4(wk),se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
-  const subL=(se?((wk.theme||"").trim()&&se.title?se.title+"  ·  ":"")+(p?p.ref:se.ref):"")+(o.digital&&se&&se.speaker?"  ·  "+se.speaker:"");
-  const dateL=longDate(wk.date),fit=(max,min,w,ml)=>{let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
+  const CV=DB.l.cv||{},TS={s:.82,m:1,l:1.15,xl:1.3}[CV.ts||"m"]||1,dy=Hp*({hi:-.07,mid:0,lo:.08}[CV.pos||"mid"]||0),ctr=CV.al=="center",tt=CV.caps=="on"?title4(wk).toUpperCase():title4(wk),se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
+  const subL=CV.sub=="off"?"":(se?((wk.theme||"").trim()&&se.title?se.title+"  ·  ":"")+(p?p.ref:se.ref):"")+(o.digital&&se&&se.speaker?"  ·  "+se.speaker:"");
+  const dateL=CV.dt=="none"?"":CV.dt=="short"?new Date(wk.date+"T12:00:00").toLocaleDateString(dloc(),{weekday:"short",month:"short",day:"numeric"}):longDate(wk.date),fit=(max,min,w,ml)=>{max*=TS;min*=Math.min(1,TS);let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
   let tb=0;const hasQ=!!coverQuote(),ill=DB.l.ill&&DB.l.ill!="none"?DB.l.ill:null;const dispT=(L,sz,x,y,col,al)=>{tb=Math.max(tb,y+(L.length-1)*sz*1.1+sz*.25);c.font=X.disp(sz);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";L.forEach((l,i)=>c.fillText(l,x,y+i*sz*1.1));c.textAlign="left"};
   const ital=(t,sz,x,y,col,al)=>{if(y<Hp*.88)tb=Math.max(tb,y+sz*.3);c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";c.fillText(t,x,y);c.textAlign="left"};
   const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left",{cap:1.8});const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
@@ -2965,16 +2986,16 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
     if(o.bold)coverArt(c,0,0,Wp,Hp,d);const ink=o.bold?"#fff":INK,mu=o.bold?"rgba(255,255,255,.78)":MUTE,ac=o.bold?"#fff":acc;
     c.font=X.disp(150*u*X.ds);c.fillStyle=ac;c.textAlign="left";c.textBaseline="alphabetic";c.fillText(day,m-4*u,m+118*u*X.ds);const dw=c.measureText(day).width;
     labelTxt(c,wd.toUpperCase(),m+dw+14*u,m+62*u,X.lab(8.5*u),mu,1.8*u);labelTxt(c,mon.toUpperCase(),m+dw+14*u,m+78*u,X.lab(8.5*u),mu,1.8*u);
-    c.fillStyle=mu;c.globalAlpha=.4;c.fillRect(m,Hp*.5-18*u,Wp-2*m,.6*u);c.globalAlpha=1;
-    const f=fit(26*u*X.ds,18*u,Wp-2*m,4);dispT(f.L,f.sz,m,Hp*.5+22*u,ink);if(subL)ital(subL,11.5*u*X.f.bs,m,Hp*.5+22*u+f.L.length*f.sz*1.1+6*u,mu);foot(ink,mu,m)}
+    c.fillStyle=mu;c.globalAlpha=.4;c.fillRect(m,(Hp*.5+dy)-18*u,Wp-2*m,.6*u);c.globalAlpha=1;
+    const f=fit(26*u*X.ds,18*u,Wp-2*m,4);dispT(f.L,f.sz,m,(Hp*.5+dy)+22*u,ink);if(subL)ital(subL,11.5*u*X.f.bs,m,(Hp*.5+dy)+22*u+f.L.length*f.sz*1.1+6*u,mu);foot(ink,mu,m)}
   else if(d=="split"){const sw=58*u,x0=sw+34*u;coverArt(c,0,0,sw,Hp,d);c.save();c.translate(sw/2+3*u,Hp-m);c.rotate(-Math.PI/2);labelTxt(c,dateL.toUpperCase(),0,0,X.lab(8.5*u),"#fff",2*u);c.restore();
-    const f=fit(38*u*X.ds,22*u,Wp-x0-m,5),ty=Hp*.36;dispT(f.L,f.sz,x0,ty,INK);c.fillStyle=HI();c.fillRect(x0,ty-f.sz-16*u,34*u,3*u);if(subL)ital(subL,12*u*X.f.bs,x0,ty+f.L.length*f.sz*1.1+10*u,MUTE);foot(INK,MUTE,x0)}
+    const f=fit(38*u*X.ds,22*u,Wp-x0-m,5),ty=Hp*.36+dy;dispT(f.L,f.sz,x0,ty,INK);c.fillStyle=HI();c.fillRect(x0,ty-f.sz-16*u,34*u,3*u);if(subL)ital(subL,12*u*X.f.bs,x0,ty+f.L.length*f.sz*1.1+10*u,MUTE);foot(INK,MUTE,x0)}
   else if(d=="arch"){const cx=Wp/2,aw=Wp-2*m*1.25,ax=cx-aw/2,ay=m*1.1,ah=Hp*(hasQ?.42:.5),r=aw/2;c.save();c.beginPath();c.moveTo(ax,ay+ah);c.lineTo(ax,ay+r);c.arc(cx,ay+r,r,Math.PI,0);c.lineTo(ax+aw,ay+ah);c.closePath();c.clip();
     if(!drawPhoto(c,ax,ay,aw,ah)){coverArt(c,ax,ay,aw,ah,d);c.fillStyle="rgba(255,255,255,.1)";c.beginPath();c.arc(cx,ay+r,r*.62,Math.PI,0);c.lineTo(cx+r*.62,ay+ah);c.lineTo(cx-r*.62,ay+ah);c.closePath();c.fill()}c.restore();if(ill&&!photoImg())drawIll(c,ill,cx,ay+ah*.66,aw*.24,"#fff",1.6*u,.92);
     labelC(c,dateL.toUpperCase(),cx,ay+ah+26*u,X.lab(8*u),MUTE,1.8*u);const f=fit(30*u*X.ds,19*u,Wp-2*m,3);dispT(f.L,f.sz,cx,ay+ah+26*u+14*u+f.sz*.8,INK,"center");
     if(subL)ital(subL,11.5*u*X.f.bs,cx,ay+ah+26*u+14*u+f.sz*.8+f.L.length*f.sz*1.1+2*u,MUTE,"center");labelC(c,DB.c.name.toUpperCase(),cx,Hp-m-2*u,X.lab(8*u),acc,2*u)}
   else if(d=="poster"){coverArt(c,0,0,Wp,Hp,d,{light:true});{const g=c.createLinearGradient(0,Hp-150*u,0,Hp);const tc=tint(acc,.12).replace("rgb(","rgba(").replace(")",",");g.addColorStop(0,tc+"0)");g.addColorStop(.6,tc+".8)");g.addColorStop(1,tc+".92)");c.fillStyle=g;c.fillRect(0,Hp-150*u,Wp,150*u)}labelTxt(c,dateL.toUpperCase(),m,m+6*u,X.lab(8.5*u),acc,1.8*u);
-    const T=tt.toUpperCase();let sz=72*u*X.ds,L;for(;sz>=26*u;sz-=2){L=wrapT(T,X.disp(sz),Wp-2*m);if(L.length<=4&&L.every(l=>mw(l,X.disp(sz))<=Wp-2*m)&&m+34*u+sz*.85+(L.length-1)*sz*1.1+60*u<Hp-m-72*u)break}
+    const T=tt.toUpperCase();let sz=72*u*X.ds*TS,L;for(;sz>=26*u;sz-=2){L=wrapT(T,X.disp(sz),Wp-2*m);if(L.length<=4&&L.every(l=>mw(l,X.disp(sz))<=Wp-2*m)&&m+34*u+sz*.85+(L.length-1)*sz*1.1+60*u<Hp-m-72*u)break}
     dispT(L,sz,m,m+34*u+sz*.85,INK);const ey=m+34*u+sz*.85+(L.length-1)*sz*1.1+22*u;c.fillStyle=HI();c.fillRect(m,ey,60*u,5*u);if(subL)ital(subL,12.5*u*X.f.bs,m,ey+30*u,INK);foot(INK,MUTE,m)}
   else if(d=="cross"){const cx=Wp/2,bh=Hp*(hasQ?.45:.54);blockFill(c,0,0,Wp,bh,d);c.fillStyle="#fff";const cw=6.5*u,vh=150*u,vy=bh/2-vh/2-6*u;if(ill)drawIll(c,ill,cx,bh/2,Math.min(70*u,bh*.3),"#fff",1.7*u);else{c.fillRect(cx-cw/2,vy,cw,vh);c.fillRect(cx-46*u,vy+44*u,92*u,cw);
     c.strokeStyle="rgba(255,255,255,.35)";c.lineWidth=.8*u;c.beginPath();c.arc(cx,vy+44*u+cw/2,64*u,0,6.29);c.stroke()}
@@ -2984,9 +3005,10 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
     let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"ctr",{top:1});if(lw)y+=26*u+LX*1.3+(LX?14*u:0);else if(ill)drawIll(c,ill,cx,p+34*u,15*u,HI(),1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
     const cy=ch*(hasQ?.34:.42)+p*.5;labelC(c,dateL.toUpperCase(),cx,cy,X.lab(8*u),MUTE,1.6*u);const f=fit(32*u*X.ds,20*u,cw-60*u,4);dispT(f.L,f.sz,cx,cy+36*u,INK,"center");
     const sy=cy+36*u+f.L.length*f.sz*1.1+6*u;c.fillStyle=acc;c.beginPath();c.arc(cx,sy+4*u,2.2*u,0,6.3);c.fill();if(subL)ital(subL,11.5*u*X.f.bs,cx,sy+26*u,MUTE,"center");if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,cx,Hp-p-26*u,MUTE,"center")}
-  else{const bold=o.bold,ink=bold?"#fff":INK,sub=bold?"rgba(255,255,255,.78)":MUTE;if(bold)coverArt(c,0,0,Wp,Hp,d);
-    c.fillStyle=bold?"#fff":acc;c.fillRect(m,m,34*u,3*u);labelTxt(c,dateL.toUpperCase(),m,m+26*u,X.lab(8.5*u),sub,1.6*u);
-    const f=fit(36*u*X.ds,22*u,Wp-2*m,4),ty=Hp*.34;dispT(f.L,f.sz,m,ty,ink);if(subL)ital(subL,12*u*X.f.bs,m,ty+f.L.length*f.sz*1.1+10*u,sub);foot(ink,sub,m)};coverIll(pg,d,o);pg.tb=tb;coverVerse(pg,d,o.digital,!!o.bold)}
+  else{const bold=o.bold,ink=bold?"#fff":INK,sub=bold?"rgba(255,255,255,.78)":MUTE,cx=Wp/2;if(bold)coverArt(c,0,0,Wp,Hp,d);
+    c.fillStyle=bold?"#fff":HI();c.fillRect(ctr?cx-17*u:m,m,34*u,3*u);if(ctr)labelC(c,dateL.toUpperCase(),cx,m+26*u,X.lab(8.5*u),sub,1.6*u);else labelTxt(c,dateL.toUpperCase(),m,m+26*u,X.lab(8.5*u),sub,1.6*u);
+    const f=fit(36*u*X.ds,22*u,Wp-2*m,4),ty=Hp*.34+dy;dispT(f.L,f.sz,ctr?cx:m,ty,ink,ctr?"center":"left");if(subL)ital(subL,12*u*X.f.bs,ctr?cx:m,ty+f.L.length*f.sz*1.1+10*u,sub,ctr?"center":"left");
+    if(ctr){const lw=drawLogo(c,cx-45*u,Hp-m-62*u,90*u,36*u,"ctr",{cap:1.6});labelC(c,DB.c.name.toUpperCase(),cx,Hp-m-(DB.c.tag?18*u:4*u),X.lab(8*u),ink,2*u);if(DB.c.tag)ital(DB.c.tag,10*u*X.f.bs,cx,Hp-m-4*u,sub,"center")}else foot(ink,sub,m)};coverFrame(c,Wp,Hp,u,d,CV.fr,hasQ,o.bold);coverIll(pg,d,o);pg.tb=tb;coverVerse(pg,d,o.digital,!!o.bold)}
 /* section headings */
 function head(X,txt,al){if(al=="right"||(al=="center"&&X.design!="traditional"&&X.design!="arch"))return headA(X,txt,al);return headBase(X,txt)}
 function headA(X,txt,al){const sz=X.s,d=X.design,ctr=al=="center",place=(wd,w)=>ctr?(w-wd)/2:w-wd;
@@ -3049,7 +3071,7 @@ function drawQuote(c,X,q,x,y,w,al,col,sz,max,refcol){let L=wrapT(q.t,X.body(sz,4
   c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al;c.textBaseline="alphabetic";const lh=sz*1.4;L.forEach((l,i)=>c.fillText(l,x,y+i*lh));
   if(q.ref){const ry=y+L.length*lh+sz*.5;c.textAlign="left";const f=X.lab(sz*.62),wd=lblW(c,q.ref.toUpperCase(),f,1.4);labelTxt(c,q.ref.toUpperCase(),al=="center"?x-wd/2:x,ry,f,refcol||col,1.4)}c.textAlign="left"}
 function coverVerse(pg,d,digital,bold){const q=coverQuote();if(!q)return;const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styleOf(10),m=38*u,cx=Wp/2,sz=11.5*u*X.f.bs,fy=digital?.0:0;
-  const P={editorial:[m,Hp*.62,Wp-2*m,"left",MUTE,4,0],minimal:[m,Hp*.67,Wp-2*m,"left",MUTE,4,0],split:[58*u+34*u,Hp*.64,Wp-58*u-34*u-m,"left",MUTE,4,0],bold:[m,Hp*.64+64*u,Wp-2*m,"left",MUTE,3,0],
+  const P={editorial:DB.l.cv&&DB.l.cv.al=="center"?[cx,Hp*.62,Wp-2*m-30*u,"center",MUTE,4,0]:[m,Hp*.62,Wp-2*m,"left",MUTE,4,0],minimal:[m,Hp*.67,Wp-2*m,"left",MUTE,4,0],split:[58*u+34*u,Hp*.64,Wp-58*u-34*u-m,"left",MUTE,4,0],bold:[m,Hp*.64+64*u,Wp-2*m,"left",MUTE,3,0],
     traditional:[cx,Hp*.62,Wp-2*m-40*u,"center",MUTE,4,0],arch:[cx,Hp*.77,Wp-2*m-50*u,"center",MUTE,3,0],cross:[cx,Hp*.77,Wp-2*m-40*u,"center",MUTE,3,0],card:[cx,Hp*.66,Wp-2*m-50*u,"center",MUTE,4,0]}[d];if(!P)return;
   const dark=bold&&(d=="editorial"||d=="minimal"),pp=m*.75,lg=DB.c.logo?56*u:40*u;
   const lim={traditional:Hp-m-52*u,arch:Hp-m-26*u,cross:Hp-m-26*u,card:Hp-pp-26*u-20*u}[d]||Hp-m-lg;
@@ -3103,6 +3125,44 @@ function churchTab(){const c=DB.c;
   <h3 class="h3">Service times</h3><div class="card">${listEd("c.times",[["d","Day","sm"],["t","Time","sm"],["n","Service name"]],"Add time")}</div>
   <h3 class="h3">Logo</h3><div class="card logo">${c.logo?`<img src="${c.logo}" alt="Church logo">`:`<div class="nologo">No logo</div>`}<div class="row"><label class="btn ghost file">${c.logo?"Replace logo":"Add logo"}<input type="file" accept="image/*" data-c="logo"></label>${c.logo?`<button class="btn ghost" data-a="nologo">Remove</button>`:""}</div>${c.logo?`<label class="lsz">Logo size <input type="range" min="0.5" max="2.4" step="0.1" value="${parseFloat(c.ls)||1}" data-i="c.ls"></label>`:""}<p class="hint">A transparent PNG works best. The website address also becomes the QR code on the back of the booklet.</p></div>
   <h3 class="h3">Your data</h3><div class="card"><p class="hint" style="margin-top:0">Everything is saved in this browser only. Download a backup to keep it safe or move it to another device.</p><div class="row"><button class="btn" data-a="bk">Download backup</button><label class="btn ghost file">Restore backup<input type="file" accept=".json,application/json" data-c="rs"></label></div></div>`}
+
+const cvs=(key,items)=>{const cur=(DB.l.cv||{})[key]||items[0][0];return `<div class="seg">${items.map(([v,l])=>`<button class="${v==cur?"on":""}" data-a="cv" data-v="${key}:${v}">${l}</button>`).join("")}</div>`};
+function coverTab(l,sl){const d=l.design,cvo=l.cv||{},row=(t,s,h)=>`<label class="fl cvrow"><span>${t}</span>${h?`<small>${h}</small>`:""}</label>${s}`;
+  return `<h3 class="h3 first">Front cover</h3><div class="card cvcard"><canvas class="cvp" data-d="${d}" data-cur="1" width="300" height="465" aria-label="Cover preview"></canvas><div class="cvopts">
+  ${row("Title size",cvs("ts",[["m","Standard"],["s","Smaller"],["l","Larger"],["xl","Largest"]]))}
+  ${row("Title style",cvs("caps",[["off","Normal"],["on","ALL CAPS"]]))}
+  ${row("Date line",cvs("dt",[["long","Full date"],["short","Short"],["none","Hidden"]]))}
+  ${row("Passage line",cvs("sub",[["on","Show"],["off","Hide"]]),"The sermon title and passage under the title")}
+  ${row("Frame",cvs("fr",[["none","None"],["thin","Thin line"],["double","Double line"]]),d=="traditional"||d=="card"?"This design already has its own frame":"")}
+  ${["editorial","split","minimal"].includes(d)?row("Title position",cvs("pos",[["mid","Standard"],["hi","Higher"],["lo","Lower"]])):""}
+  ${d=="editorial"?row("Alignment",cvs("al",[["left","Left"],["center","Centered"]])):""}
+  ${sl?row("Cover color",seg([["light","Light"],["bold","Bold color"]],l.cover,"cov"),"Light prints cleanly on any office printer. Bold suits commercial printing and digital use. The digital cover is always bold."):`<p class="hint">This design uses color to the edge of the page, so print it borderless or on a commercial printer.</p>`}
+  <button class="btn ghost" data-a="cvreset" style="margin-top:10px">Reset cover options</button></div></div>`}
+A.cv=v=>{const k=v.split(":");DB.l.cv=Object.assign({},DB.l.cv);DB.l.cv[k[0]]=k[1];persist();render(true)};A.cvreset=()=>{DB.l.cv={};persist();render(true)};
+
+/* drag and drop reordering (sections and list rows), mouse, touch and keyboard */
+const GRIP='<svg viewBox="0 0 12 18" width="12" height="18" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/></svg>';
+function decorateDnD(){const mk=()=>{const b=document.createElement("button");b.type="button";b.className="grip";b.setAttribute("aria-label","Drag to reorder. Or focus and press the up and down arrow keys.");b.innerHTML=GRIP;return b};
+  document.querySelectorAll(".secs>.sec>header").forEach(h=>{if(!h.querySelector(":scope>.grip"))h.insertBefore(mk(),h.firstChild)});
+  document.querySelectorAll(".items>.it").forEach(r=>{if(!r.querySelector(":scope>.grip"))r.insertBefore(mk(),r.firstChild)})}
+function dndTarget(row){const box=row.parentElement;if(box.classList.contains("secs"))return{arr:W().secs,box};const x=row.querySelector(".x[data-a=deli]");if(!x)return null;const p=x.dataset.v.split(".");p.pop();return{arr:getP(p.join(".")),box}}
+function dndKids(box){return[...box.children].filter(x=>x.matches(".sec,.it"))}
+document.addEventListener("pointerdown",e=>{const g=e.target.closest&&e.target.closest(".grip");if(!g||(e.button&&e.button!==0))return;const row=g.closest(".sec,.it"),T=row&&dndTarget(row);if(!T)return;e.preventDefault();
+  const box=T.box;dndKids(box).forEach((r,i)=>r.dataset.oi=i);const bd=row.querySelector(".bd");if(bd)bd.style.display="none";
+  let sy=e.clientY,cy=e.clientY,raf=0;row.classList.add("drag");box.classList.add("dragging");try{g.setPointerCapture(e.pointerId)}catch(x){}
+  const place=()=>{const kids=dndKids(box);let moved=true,guard=0;row.style.transform="translateY("+(cy-sy)+"px)";
+    while(moved&&guard++<6){moved=false;const rr=row.getBoundingClientRect(),mid=rr.top+rr.height/2,i=kids.indexOf(row),nx=kids[i+1],pv=kids[i-1];
+      const swap=(o,after)=>{const before=row.getBoundingClientRect().top;if(after)box.insertBefore(o,row);else box.insertBefore(row,o);const d=row.getBoundingClientRect().top-before;sy+=d;row.style.transform="translateY("+(cy-sy)+"px)"};
+      if(nx){const r=nx.getBoundingClientRect();if(mid>r.top+r.height/2){swap(nx,true);kids.splice(i,2,nx,row);moved=true;continue}}
+      if(pv){const r=pv.getBoundingClientRect();if(mid<r.top+r.height/2){swap(pv,false);kids.splice(i-1,2,row,pv);moved=true}}}};
+  const mv=ev=>{cy=ev.clientY;place();const h=innerHeight;if(cy<70)scrollBy(0,-14);else if(cy>h-70)scrollBy(0,14)};
+  const up=()=>{g.removeEventListener("pointermove",mv);g.removeEventListener("pointerup",up);g.removeEventListener("pointercancel",up);row.classList.remove("drag");box.classList.remove("dragging");row.style.transform="";
+    const order=dndKids(box).map(r=>+r.dataset.oi);if(order.some((v,i)=>v!=i)){const na=order.map(i=>T.arr[i]);T.arr.splice(0,T.arr.length,...na);persist();render(true)}else render(true)};
+  g.addEventListener("pointermove",mv);g.addEventListener("pointerup",up);g.addEventListener("pointercancel",up)});
+document.addEventListener("keydown",e=>{const g=e.target.closest&&e.target.closest(".grip");if(!g||(e.key!="ArrowUp"&&e.key!="ArrowDown"))return;const row=g.closest(".sec,.it"),T=row&&dndTarget(row);if(!T)return;e.preventDefault();
+  const kids=dndKids(T.box),i=kids.indexOf(row),j=i+(e.key=="ArrowUp"?-1:1);if(j<0||j>=kids.length)return;[T.arr[i],T.arr[j]]=[T.arr[j],T.arr[i]];persist();render(true);
+  const isS=T.box.classList.contains("secs");let pth="";if(!isS){const q=row.querySelector(".x[data-a=deli]").dataset.v.split(".");q.pop();pth=q.join(".")}
+  setTimeout(()=>{let r;if(isS)r=document.querySelectorAll(".secs>.sec")[j];else r=[...document.querySelectorAll(".items>.it")].find(z=>{const x=z.querySelector(".x[data-a=deli]");return x&&x.dataset.v==pth+"."+j});const gg=r&&r.querySelector(".grip");if(gg)gg.focus()},30)});
 function lookTab(){const l=DB.l,sl=l.design=="editorial"||l.design=="minimal",sg=seasonFor(W().date),ss=SEASONS.find(x=>x.k==sg),light=l.design=="poster"||l.design=="card",artOK=l.design!="traditional"&&(!sl||l.cover=="bold");
   const seasons=`<h3 class="h3 first">Seasons</h3><div class="card">${ss?`<p class="hint" style="margin:0 0 10px">This Sunday falls in <b>${ss.n}</b>.${l.pack==ss.k?"":` <button class="btn ghost sm" data-a="pack" data-v="${ss.k}">Use the ${ss.n} look</button>`}</p>`:`<p class="hint" style="margin:0 0 10px">One tap sets the design, color, typefaces, art and illustration for a season.</p>`}<div class="seas">${SEASONS.map(x=>`<button class="scard ${l.pack==x.k?"on":""}" data-a="pack" data-v="${x.k}" aria-pressed="${l.pack==x.k}"><i style="background:${x.acc}"></i><b>${x.n}</b><small>${x.d}</small></button>`).join("")}</div>${l.pack?`<button class="btn ghost sm" data-a="pack" data-v="" style="margin-top:10px">Clear season look</button>`:""}</div>`;
   const artH=artOK?`<h3 class="h3">Cover art</h3><div class="card"><div class="artg">${ART.map(a=>`<button class="acard ${l.art==a[0]?"on":""}" data-a="art" data-v="${a[0]}" aria-pressed="${l.art==a[0]}"><canvas data-art="${a[0]}" width="132" height="176"></canvas><small>${a[1]}</small></button>`).join("")}</div><div class="row" style="margin:10px 0 0"><button class="btn ghost sm" data-a="shuf">Shuffle art</button></div><p class="hint" style="margin-top:8px">The art is drawn fresh from your accent color, and it changes every week. Shuffle until you like it.</p></div>`:"";
@@ -3118,11 +3178,11 @@ function lookTab(){const l=DB.l,sl=l.design=="editorial"||l.design=="minimal",sg
   \u0002<h3 class="h3">Text alignment</h3><div class="card">${seg([["left","Left"],["center","Center"],["right","Right"],["justify","Justified"]],l.align||"left","aln")}<p class="hint">Applies to paragraphs, headings and the sermon text. Any section can use its own alignment in This week. Events keep their date column.</p></div>
   <h3 class="h3">Bulletin language</h3><div class="card"><select data-c="l.lang" aria-label="Bulletin language">${Object.keys(LANGS).map(k=>`<option value="${k}" ${(l.lang||"en")==k?"selected":""}>${LANGS[k].n}</option>`).join("")}</select><p class="hint">Changes the printed headings (Welcome, Announcements…), the date format and the QR label. Type your own text in any language. Scripture inserted from the built-in Bible is English (Berean Standard Bible); paste another translation into the section to use it. Please have a native speaker check the headings before printing.</p></div>
   <h3 class="h3">Text size</h3><div class="card">${seg([["std","Standard"],["large","Large print"]],l.size,"sz")}<p class="hint">Large print enlarges all text by about 14 percent. Long bulletins may shrink slightly to fit.</p></div>
-  ${sl?`<h3 class="h3">Cover</h3><div class="card">${seg([["light","Light"],["bold","Bold color"]],l.cover,"cov")}<p class="hint">Light covers print cleanly on any office printer. Bold covers suit commercial printing and digital use. The digital cover is always bold.</p></div>`:`<p class="hint" style="margin-top:18px">This design uses color to the edge of the page, so print it borderless or on a commercial printer. Editorial and Minimal have light covers that suit any office printer.</p>`}`;const pp=H.split(/[\u0001\u0002]/),k=S.lk||"design";return `<div class="sub">${seg([["design","Design"],["color","Colors & type"],["more","Details"]],k,"lk")}</div>`+(k=="design"?pp[0]:k=="color"?pp[1]:pp[2])}
+\u0003${coverTab(l,sl)}`;const pp=H.split(/[\u0001\u0002\u0003]/),k=S.lk||"design";return `<div class="sub">${seg([["design","Design"],["cover","Cover"],["color","Colors & type"],["more","Details"]],k,"lk")}</div>`+(k=="design"?pp[0]:k=="cover"?pp[3]:k=="color"?pp[1]:pp[2])}
 A.lk=v=>{S.lk=v;render();window.scrollTo(0,0)};
 
 async function thumbs(){const cs=document.querySelectorAll("canvas[data-d],canvas[data-art],canvas[data-ill]");if(!cs.length)return;await loadFonts();cs.forEach(cv=>{try{if(cv.dataset.art){const c=cv.getContext("2d"),k=cv.dataset.art,d=DB.l.design,kk=k=="auto"?(ART_AUTO[d]||"none"):k,lt=d=="poster"||d=="card";c.clearRect(0,0,cv.width,cv.height);if(kk=="none"){c.fillStyle=lt?tint(DB.l.accent,.1):DB.l.accent;c.fillRect(0,0,cv.width,cv.height)}else artFill(c,0,0,cv.width,cv.height,kk,{seed:artSeed(),light:lt});return}
-    if(cv.dataset.ill){const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);drawIll(c,cv.dataset.ill,cv.width/2,cv.height/2,cv.width*.4,DB.l.accent,2.4);return}const pg=mkPage(396,612,cv.width/396);drawCover(pg,W(),{design:cv.dataset.d,bold:false});const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);c.drawImage(pg.cv,0,0,cv.width,cv.height)}catch(e){}})}
+    if(cv.dataset.ill){const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);drawIll(c,cv.dataset.ill,cv.width/2,cv.height/2,cv.width*.4,DB.l.accent,2.4);return}const pg=mkPage(396,612,cv.width/396);drawCover(pg,W(),{design:cv.dataset.d,bold:!!cv.dataset.cur&&DB.l.cover=="bold"});const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);c.drawImage(pg.cv,0,0,cv.width,cv.height)}catch(e){}})}
 A.dsn=v=>{const d=DESIGNS.find(x=>x[0]==v);DB.l.design=v;DB.l.font=d[3];persist();render(true)};
 A.pack=v=>{if(!v){DB.l.pack="";DB.l.art="auto";DB.l.ill="none"}else{const x=SEASONS.find(y=>y.k==v);Object.assign(DB.l,{pack:v,design:x.dsn,accent:x.acc,hi:"",art:x.art,ill:x.ill,cover:"bold",font:x.font})}persist();render(true)};
 A.art=v=>{DB.l.art=v;persist();render(true)};A.ill=v=>{DB.l.ill=v;persist();render(true)};A.shuf=()=>{DB.l.seed=(DB.l.seed|0)+1;persist();render(true)};A.pt=v=>{DB.l.pt=v;persist();render(true)};
@@ -3154,7 +3214,7 @@ function render(keepScroll){if(S.tab=="prev"&&matchMedia("(min-width:980px)").ma
   <nav class="bnav" aria-label="Main">${TABS.map(t=>`<button class="${S.tab==t[0]&&!S.more?"on":""}" data-a="tab" data-v="${t[0]}" ${S.tab==t[0]?'aria-current="page"':""}>${svgi(t[0])}<span>${t[0]=="week"?"Week":t[1]}</span></button>`).join("")}<button class="${S.more?"on":""}" data-a="more" aria-expanded="${!!S.more}">${svgi("more")}<span>More</span></button></nav>${S.more?moreHtml():""}
   <div class="cols t-${S.tab}"><main class="edit">${S.tab=="prev"?"":body}</main><aside class="side">${pvPanel()}</aside></div>
   ${S.ov!=null?ovHtml():""}${S.mdl?mdlHtml():""}${S.cpt?`<div class="ov cpo" data-a="cptx"><div class="ovb" data-stop="1"><p>${esc(S.cpt.m)}</p><textarea id="cpt" readonly>${esc(S.cpt.t)}</textarea><button class="btn" data-a="cptx">Done</button></div></div>`:""}`;
-  if(keepScroll)window.scrollTo(0,y);doLayout();if(S.tab=="look")thumbs();if(S.cpt){const x=$("cpt");if(x){x.focus();x.select()}}}
+  if(keepScroll)window.scrollTo(0,y);decorateDnD();doLayout();if(S.tab=="look")thumbs();if(S.cpt){const x=$("cpt");if(x){x.focus();x.select()}}}
 function moreHtml(){const w=W(),it=(a,t,s)=>`<button class="mi" data-a="mact" data-v="${a}"><b>${t}</b>${s?`<small>${s}</small>`:""}</button>`,dg=DB.l.layout=="digital";
   return `<div class="sheetbg" data-a="mclose"></div><div class="sheet" role="dialog" aria-label="Menu" data-stop="1"><div class="grab"></div><div class="shh"><b>${esc(DB.c.name||"Orderly")}</b><small>${esc(shortDate(w.date))} bulletin</small></div>
   <h4>Export</h4>${dg?it("share",navigator.canShare?"Share slides":"Save slides","Send the slides to your phone or social apps")+it("zip","Download all (ZIP)","Every slide as an image"):it("pdf","Download PDF","Print-ready, 300 dpi")+it("zip","Images (ZIP)","One image per page")}${it("cptext","Copy as text","For email, a website or a text message")}
