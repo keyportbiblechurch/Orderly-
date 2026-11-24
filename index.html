@@ -261,6 +261,16 @@ input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 
 .it.col .fx{padding-right:0}
 .fx select{width:auto;min-height:0;flex:0 0 auto}
 
+#bbar{position:fixed;z-index:60;width:30px;height:30px;border-radius:8px;border:0;background:var(--ac);color:#fff;font:inherit;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+#bbar.show{display:flex}
+.it.ord{flex-wrap:wrap}
+.it.ord input:not(.sm){flex:1 1 110px;min-width:0}
+.it.ord input.sm{flex:1 1 90px;min-width:0}
+.it.ord[data-lv="1"]{margin-left:16px}.it.ord[data-lv="2"]{margin-left:32px}
+.lvl{display:inline-flex;gap:2px;flex:0 0 auto}
+.lvl button{width:28px;height:34px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:inherit;cursor:pointer;font-size:12px;padding:0}
+.lvl button[disabled]{opacity:.35;cursor:default}
+
 </style>
 </head>
 <body>
@@ -2567,12 +2577,28 @@ function wrapT(t,font,w){sc.font=font;const out=[];String(t||"").split("\n").for
   while(out.length&&out[out.length-1]==="")out.pop();return out}
 const mw=(t,font)=>{sc.font=font;return sc.measureText(t).width};
 function fit1(t,font,w){if(mw(t,font)<=w)return t;let s=t;while(s.length>1&&mw(s+"…",font)>w)s=s.slice(0,-1);return s.trimEnd()+"…"}
+const stripB=t=>String(t||"").replace(/\*\*/g,"");
+function bfont(f){return /\b[1-9]00\b/.test(f)?f.replace(/\b[1-9]00\b/,"700"):"bold "+f}
+function runsOf(p){const parts=String(p).split("**"),words=[];let cur=null,b=false;
+  parts.forEach((seg,si)=>{if(si>0)b=!b;const re=/(\s+)|(\S+)/g;let m;while((m=re.exec(seg))){if(m[1])cur=null;else{if(!cur){cur=[];words.push(cur)}cur.push({t:m[2],b})}}});return words}
+function richRows(t,o){const f=o.font,bf=bfont(f),sp=mw(" ",f),W=o.w-(o.ind||0),jf=o.align=="justify",rows=[],wW=w=>w.reduce((a,r)=>a+mw(r.t,r.b?bf:f),0);
+  String(t||"").split("\n").forEach(p=>{if(!p.trim()){rows.push({h:o.lh*.5,blank:true,draw(){}});return}
+    const ws=runsOf(p).map(w=>({w,wd:wW(w)})),lines=[];let cur=[],x=0;
+    ws.forEach(q=>{const nx=cur.length?x+sp+q.wd:q.wd;if(cur.length&&nx>W){lines.push(cur);cur=[q];x=q.wd}else{cur.push(q);x=nx}});if(cur.length)lines.push(cur);
+    lines.forEach((L,li)=>{const sw=L.reduce((a,q)=>a+q.wd,0),tw=sw+sp*(L.length-1),last=li==lines.length-1;
+      rows.push({h:o.lh,draw(c,x0,y,w){const ww=w-(o.ind||0),by=y+o.lh*.5+o.size*.32;c.textBaseline="alphabetic";c.textAlign="left";c.fillStyle=o.color;
+        let gp=sp,off=0;if(jf&&!last&&L.length>1){const g=(ww-sw)/(L.length-1);if(g<=sp*3.2)gp=g}else if(o.align=="center")off=(ww-tw)/2;else if(o.align=="right")off=ww-tw;
+        let px=x0+(o.ind||0)+off;L.forEach(q=>{q.w.forEach(r=>{const ff=r.b?bf:f;c.font=ff;c.fillText(r.t,px,by);px+=mw(r.t,ff)});px+=gp})}})})});
+  while(rows.length&&rows[rows.length-1].blank)rows.pop();return rows}
+const richSegs=raw=>String(raw).split("**").map((t,i)=>({t,b:i%2==1})).filter(r=>r.t),richW=(sg,f,bf)=>sg.reduce((a,r)=>a+mw(r.t,r.b?bf:f),0);
+function richDraw(c,sg,x,y,f,bf){sg.forEach(r=>{const ff=r.b?bf:f;c.font=ff;c.fillText(r.t,x,y);x+=mw(r.t,ff)})}
+const TGK=()=>({sm:.85,m:1,l:1.3,xl:1.6}[DB.c.tsz||"m"]||1);
 
 function ctxOf(L){ // style context for rows
   const f=fontSet(L.font),base=L.s;return{f,s:base,bs:base*f.bs,ds:f.ds,acc:L.accent,hi:HT(L.hi||L.accent),design:L.design,
     body:(sz,wt,it)=>fnt(wt||400,sz,f.b,it),disp:sz=>fnt(f.d[1],sz,f.d),lab:sz=>fnt(f.l[1],sz,f.l)}}
 
-function T(t,o){const jf=o.align=="justify";let lines;
+function T(t,o){if(String(t||"").indexOf("**")>=0)return richRows(t,o);const jf=o.align=="justify";let lines;
   if(jf){lines=[];String(t||"").split("\n").forEach(p=>{if(!p.trim()){lines.push({t:"",last:1});return}const L=wrapT(p,o.font,o.w-(o.ind||0));L.forEach((l,i)=>lines.push({t:l,last:i==L.length-1}))});while(lines.length&&lines[lines.length-1].t==="")lines.pop()}
   else lines=wrapT(t,o.font,o.w-(o.ind||0)).map(l=>({t:l}));
   return lines.map(L=>L.t===""?{h:o.lh*.5,blank:true,draw(){}}:{h:o.lh,draw(c,x,y,w){c.font=o.font;c.fillStyle=o.color;c.textBaseline="alphabetic";const by=y+o.lh*.5+o.size*.32,ww=w-(o.ind||0);
@@ -2615,11 +2641,13 @@ function secRows(X,sec,w,wk){const s=X.bs*(TSM[sec.ts]||1),lh=s*1.42,R=[];const 
   const FX=sec.box||(sec.img&&imgOf(sec.img)),fxw=(rowsFn)=>featBlock(X,w,{s,is:sec.is,mk:rowsFn,img:sec.img,ip:sec.ip,box:sec.box});
   if(sec.k=="welcome"){if(!sec.text.trim())return R;if(FX)R.push(head(X,tr("welcome"),al),...fxw(tw=>para(sec.text,{w:tw})));else R.push(head(X,tr("welcome"),al),...para(sec.text),gap(s*.5))}
   else if(sec.k=="order"){const it=sec.items.filter(i=>(i.l||"").trim());if(!it.length)return R;R.push(head(X,tr("order"),al));
-    it.forEach(i=>R.push({h:lh*1.08,draw(c,x,y,w){const bl=y+lh*.5+s*.32,nf=X.body(s*.95,400,true),nt=(i.n||"").trim(),nw=nt?mw(nt,nf):0,lf=fit1(i.l.trim(),body,w-nw-(nt?16:0));
-      c.textBaseline="alphabetic";c.textAlign="left";c.font=body;c.fillStyle=INK;
-      if(al=="center"||al=="right"){const lt=i.l.trim(),sep="  ·  ",tot=mw(lt,body)+(nt?mw(sep,body)+nw:0);if(tot<=w){let px=al=="center"?x+(w-tot)/2:x+w-tot;c.fillText(lt,px,bl);if(nt){px+=mw(lt,body);c.fillStyle=mute;c.fillText(sep,px,bl);px+=mw(sep,body);c.font=nf;c.fillText(nt,px,bl)}return}}
-      c.fillText(lf,x,bl);
-      if(nt){c.font=nf;c.fillStyle=mute;c.textAlign="right";c.fillText(nt,x+w,bl);const lw=mw(lf,body);c.save();c.strokeStyle="#b9bec8";c.lineWidth=.7;c.setLineDash([.5,2.6]);c.beginPath();c.moveTo(x+lw+6,bl-1);c.lineTo(x+w-nw-6,bl-1);c.stroke();c.restore()}}}));R.push(gap(s*.5))}
+    it.forEach(i=>{const lv=Math.max(0,Math.min(2,i.lv|0)),ind=lv*s*1.6,sz=lv==2?s*.93:lv==1?s*.97:s,lf0=X.body(sz),bf0=X.body(sz,700),col=lv==2?mute:INK;
+      R.push({h:lh*1.08,draw(c,x,y,w){x+=ind;w-=ind;const bl=y+lh*.5+s*.32,nf=X.body(sz*.95,400,true),nt=stripB(i.n||"").trim(),nw=nt?mw(nt,nf):0,raw=(i.l||"").trim(),pl=stripB(raw),lf=fit1(pl,lf0,w-nw-(nt?16:0)),sg=(raw.indexOf("**")>=0&&lf===pl)?richSegs(raw):[{t:lf,b:false}],lw=richW(sg,lf0,bf0);
+        c.textBaseline="alphabetic";c.textAlign="left";c.fillStyle=col;
+        if(al=="center"||al=="right"){const sep="  ·  ",tot=lw+(nt?mw(sep,lf0)+nw:0);if(tot<=w){let px=al=="center"?x+(w-tot)/2:x+w-tot;richDraw(c,sg,px,bl,lf0,bf0);if(nt){px+=lw;c.fillStyle=mute;c.font=lf0;c.fillText(sep,px,bl);px+=mw(sep,lf0);c.font=nf;c.fillText(nt,px,bl)}return}}
+        if(lv){c.save();c.fillStyle=mute;c.beginPath();c.arc(x-s*.7,bl-s*.3,s*.12,0,6.29);c.fill();c.restore();c.fillStyle=col}
+        richDraw(c,sg,x,bl,lf0,bf0);
+        if(nt){c.font=nf;c.fillStyle=mute;c.textAlign="right";c.fillText(nt,x+w,bl);c.save();c.strokeStyle="#b9bec8";c.lineWidth=.7;c.setLineDash([.5,2.6]);c.beginPath();c.moveTo(x+lw+6,bl-1);c.lineTo(x+w-nw-6,bl-1);c.stroke();c.restore()}}})});R.push(gap(s*.5))}
   else if(sec.k=="sermon"){const hasAny=sec.title||sec.ref||sec.speaker||sec.series;if(!hasAny)return R;R.push(head(X,tr("sermon"),al));
     const kp=a=>{a.forEach(r=>r.keep=true);return a};
     if(sec.title)R.push(...kp(T(sec.title,{font:X.disp(s*1.75*X.ds),color:INK,size:s*1.75*X.ds,lh:s*1.75*X.ds*1.15,w,align:al2})));
@@ -2679,7 +2707,7 @@ function drawBack(pg,wk,s,warn,pre){const c=pg.c,Wp=pg.W,Hp=pg.H,nar=Wp<300,m=na
   const tl=timesList(),blockH=nar?148:150;
   const rows=pre?pre.slice():[];if(!pre)backSecs(wk).forEach(sec=>rows.push(...secRows(X,sec,w,wk)));
   let used=0;const r=flow(rows,()=>used++?null:{c,x:m,y:m,w,h:Hp-2*m-blockH-10});if(r)warn.push(r);
-  {const top=m+hOf(rows),free=Hp-m-blockH-2-top,tg=(DB.c.tag||"").trim();if(!r&&tg&&DB.c.btag!==false&&free>(nar?120:130)){const sz=(nar?12.5:15)*X.f.bs,f=X.body(sz,400,true);c.font=f;const ls=wrapT(tg,f,w*(nar?.9:.78)),lh=sz*1.4,bh=20+ls.length*lh,y0=top+(free-bh)*.5+4;ornament(c,Wp/2,y0,nar?30:40,DB.l.accent,.8);c.textAlign="center";c.fillStyle=MUTE;c.textBaseline="alphabetic";ls.forEach((l,i)=>c.fillText(l,Wp/2,y0+22+i*lh));c.textAlign="left"}}
+  {const top=m+hOf(rows),free=Hp-m-blockH-2-top,tg=(DB.c.tag||"").trim();if(!r&&tg&&DB.c.btag!==false&&free>(nar?120:130)){const sz=(nar?12.5:15)*X.f.bs*TGK(),f=X.body(sz,400,true);c.font=f;const ls=wrapT(tg,f,w*(nar?.9:.78)),lh=sz*1.4,bh=20+ls.length*lh,y0=top+(free-bh)*.5+4;ornament(c,Wp/2,y0,nar?30:40,DB.l.accent,.8);c.textAlign="center";c.fillStyle=MUTE;c.textBaseline="alphabetic";ls.forEach((l,i)=>c.fillText(l,Wp/2,y0+22+i*lh));c.textAlign="left"}}
   // info block
   const by=Hp-m-blockH+6;c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(m,by-8);c.lineTo(Wp-m,by-8);c.stroke();
   const QL=qrLinks(),qn=QL.length,showQ=qn>0,qg=8,qs=qn?Math.min(nar?64:86,Math.floor(((nar?(qn>1?.62:.5):.4)*w-qg*(qn-1))/qn)):0,tw=w-(showQ?qrW(qn,qs,qg)+20:0);let ix=m;
@@ -2986,6 +3014,7 @@ function coverFrame(c,W,H,u,d,fr,hasQ,bold){if(!fr||fr=="none"||d=="traditional"
   else if(d=="photo"||((d=="editorial"||d=="minimal")&&bold))ring(0,0,W,H,wh);
   else if(d=="split"){ring(0,0,58*u,H,wh);ring(58*u,0,W,H,hi)}
   else ring(0,0,W,H,hi)}
+const tagL=(X,txt,sz,w)=>wrapT(txt,X.body(sz,400,true),w).slice(0,3);
 function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styleOf(10),d=o.design||DB.l.design,acc=DB.l.accent,m=38*u;
   const CV=DB.l.cv||{},TS={s:.82,m:1,l:1.15,xl:1.3}[CV.ts||"m"]||1,dy=Hp*({hi:-.07,mid:0,lo:.08}[CV.pos||"mid"]||0),ctr=CV.al=="center",tt=CV.caps=="on"?title4(wk).toUpperCase():title4(wk),se=wk.secs.find(s=>s.k=="sermon"&&s.on&&(s.ref||"").trim()),p=se&&passage(se.ref);
   const sv=wk.secs.find(s=>s.k=="sermon"&&s.on&&((s.ref||"").trim()||(s.title||"").trim())),svBody=sv?[(wk.theme||"").trim()?sv.title:"",(sv.ref||"").trim()?(p?p.ref:sv.ref):"",o.digital?sv.speaker:""].filter(Boolean).join("  ·  "):"";
@@ -2993,7 +3022,7 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   const dateL=CV.dt=="none"?"":CV.dt=="short"?new Date(wk.date+"T12:00:00").toLocaleDateString(dloc(),{weekday:"short",month:"short",day:"numeric"}):longDate(wk.date),fit=(max,min,w,ml)=>{max*=TS;min*=Math.min(1,TS);let sz=max,L;for(;sz>=min;sz-=1){L=wrapT(tt,X.disp(sz),w);if(L.length<=ml)break}return{sz,L}};
   let tb=0;const hasQ=!!coverQuote(),ill=DB.l.ill&&DB.l.ill!="none"?DB.l.ill:null;const dispT=(L,sz,x,y,col,al)=>{tb=Math.max(tb,y+(L.length-1)*sz*1.1+sz*.25);c.font=X.disp(sz);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";L.forEach((l,i)=>c.fillText(l,x,y+i*sz*1.1));c.textAlign="left"};
   const ital=(t,sz,x,y,col,al)=>{if(y<Hp*.88)tb=Math.max(tb,y+sz*.3);c.font=X.body(sz,400,true);c.fillStyle=col;c.textAlign=al||"left";c.textBaseline="alphabetic";c.fillText(t,x,y);c.textAlign="left"};
-  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left",{cap:1.8});const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;c.fillText(DB.c.name,tx,Hp-m-(DB.c.tag?20*u:5*u));if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,tx,Hp-m-5*u,sub)};
+  const foot=(col,sub,x0)=>{const lw=drawLogo(c,x0,Hp-m-50*u,120*u,50*u,"left",{cap:1.8});const tx=x0+(lw?lw+12*u:0);c.textAlign="left";c.textBaseline="alphabetic";c.font=X.disp(15*u*X.ds);c.fillStyle=col;{const tz=10.5*u*X.f.bs*TGK(),tL=DB.c.tag?tagL(X,DB.c.tag,tz,Wp-m-tx):[],yb=Hp-m-5*u;c.fillText(DB.c.name,tx,tL.length?yb-(tL.length-1)*tz*1.18-tz*1.43:yb);tL.forEach((l,i)=>ital(l,tz,tx,yb-(tL.length-1-i)*tz*1.18,sub))}};
   c.fillStyle="#fff";c.fillRect(0,0,Wp,Hp);
   if(d=="traditional"){const cx=Wp/2,fr=m*.5;c.strokeStyle=acc;c.lineWidth=1.5*u;c.strokeRect(fr,fr,Wp-2*fr,Hp-2*fr);c.lineWidth=.5*u;c.strokeRect(fr+5*u,fr+5*u,Wp-2*fr-10*u,Hp-2*fr-10*u);
     let y=m+22*u;if(ill)drawIll(c,ill,cx,y,17*u,HI(),1.1*u);else{c.strokeStyle=HI();c.lineWidth=1.3*u;c.beginPath();c.moveTo(cx,y-12*u);c.lineTo(cx,y+14*u);c.moveTo(cx-8*u,y-3*u);c.lineTo(cx+8*u,y-3*u);c.stroke()}
@@ -3001,8 +3030,8 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
     labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(9*u),acc,2.2*u);y+=14*u;c.strokeStyle=RULE;c.lineWidth=.6*u;c.beginPath();c.moveTo(cx-24*u,y);c.lineTo(cx+24*u,y);c.stroke();
     labelC(c,dateL.toUpperCase(),cx,Hp*.4-60*u,X.lab(8*u),MUTE,1.6*u);
     const f=fit(34*u*X.ds,20*u,Wp-2*m-24*u,4);dispT(f.L,f.sz,cx,Hp*.4,INK,"center");if(subL)ital(subL,12*u*X.f.bs,cx,Hp*.4+f.L.length*f.sz*1.1+14*u,MUTE,"center");
-    if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,cx,Hp-m-14*u,MUTE,"center");
-    c.strokeStyle=acc;c.lineWidth=.8*u;c.beginPath();c.moveTo(cx-30*u,Hp-m-34*u);c.lineTo(cx+30*u,Hp-m-34*u);c.stroke()}
+    {const tz=10.5*u*X.f.bs*TGK(),tL=DB.c.tag?tagL(X,DB.c.tag,tz,Wp-2*m-30*u):[],ry=Hp-m-34*u-(tL.length?(tL.length-1)*tz*1.18+(tz-10.5*u)*.8:0);tL.forEach((l,i)=>ital(l,tz,cx,Hp-m-14*u-(tL.length-1-i)*tz*1.18,MUTE,"center"));
+      c.strokeStyle=acc;c.lineWidth=.8*u;c.beginPath();c.moveTo(cx-30*u,ry);c.lineTo(cx+30*u,ry);c.stroke()}}
   else if(d=="bold"||(d=="photo"&&!photoImg())){const bh=Hp*.64;blockFill(c,0,0,Wp,bh,d);
     labelTxt(c,dateL.toUpperCase(),m,m+8*u,X.lab(8.5*u),"rgba(255,255,255,.82)",1.8*u);
     const f=fit(44*u*X.ds,24*u,Wp-2*m,5);dispT(f.L,f.sz,m,bh-m-(f.L.length-1)*f.sz*1.1,"#fff");
@@ -3033,11 +3062,11 @@ function drawCover(pg,wk,o){o=o||{};const c=pg.c,Wp=pg.W,Hp=pg.H,u=Wp/396,X=styl
   else if(d=="card"){coverArt(c,0,0,Wp,Hp,d,{light:true});const cx=Wp/2,p=m*.5,cw=Wp-2*p,ch=Hp-2*p;c.save();c.shadowColor="rgba(0,0,0,.12)";c.shadowBlur=16*u;c.shadowOffsetY=4*u;c.fillStyle="#fff";c.fillRect(p,p,cw,ch);c.restore();c.strokeStyle=HI();c.lineWidth=.7*u;c.strokeRect(p+8*u,p+8*u,cw-16*u,ch-16*u);
     let y=p+60*u;const lw=drawLogo(c,cx-40*u,y-28*u,80*u,40*u,"ctr",{top:1});if(lw)y+=26*u+LX*1.3+(LX?14*u:0);else if(ill)drawIll(c,ill,cx,p+34*u,15*u,HI(),1*u);labelC(c,DB.c.name.toUpperCase(),cx,y,X.lab(8.5*u),acc,2*u);
     const cy=ch*(hasQ?.34:.42)+p*.5;labelC(c,dateL.toUpperCase(),cx,cy,X.lab(8*u),MUTE,1.6*u);const f=fit(32*u*X.ds,20*u,cw-60*u,4);dispT(f.L,f.sz,cx,cy+36*u,INK,"center");
-    const sy=cy+36*u+f.L.length*f.sz*1.1+6*u;c.fillStyle=acc;c.beginPath();c.arc(cx,sy+4*u,2.2*u,0,6.3);c.fill();if(subL)ital(subL,11.5*u*X.f.bs,cx,sy+26*u,MUTE,"center");if(DB.c.tag)ital(DB.c.tag,10.5*u*X.f.bs,cx,Hp-p-26*u,MUTE,"center")}
+    const sy=cy+36*u+f.L.length*f.sz*1.1+6*u;c.fillStyle=acc;c.beginPath();c.arc(cx,sy+4*u,2.2*u,0,6.3);c.fill();if(subL)ital(subL,11.5*u*X.f.bs,cx,sy+26*u,MUTE,"center");if(DB.c.tag){const tz=10.5*u*X.f.bs*TGK(),tL=tagL(X,DB.c.tag,tz,cw-2*p);tL.forEach((l,i)=>ital(l,tz,cx,Hp-p-26*u-(tL.length-1-i)*tz*1.18,MUTE,"center"))}}
   else{const bold=o.bold,ink=bold?"#fff":INK,sub=bold?"rgba(255,255,255,.78)":MUTE,cx=Wp/2;if(bold)coverArt(c,0,0,Wp,Hp,d);
     c.fillStyle=bold?"#fff":HI();c.fillRect(ctr?cx-17*u:m,m,34*u,3*u);if(ctr)labelC(c,dateL.toUpperCase(),cx,m+26*u,X.lab(8.5*u),sub,1.6*u);else labelTxt(c,dateL.toUpperCase(),m,m+26*u,X.lab(8.5*u),sub,1.6*u);
     const f=fit(36*u*X.ds,22*u,Wp-2*m,4),ty=Hp*.34+dy;dispT(f.L,f.sz,ctr?cx:m,ty,ink,ctr?"center":"left");if(subL)ital(subL,12*u*X.f.bs,ctr?cx:m,ty+f.L.length*f.sz*1.1+10*u,sub,ctr?"center":"left");
-    if(ctr){const lw=drawLogo(c,cx-45*u,Hp-m-62*u,90*u,36*u,"ctr",{cap:1.6});labelC(c,DB.c.name.toUpperCase(),cx,Hp-m-(DB.c.tag?18*u:4*u),X.lab(8*u),ink,2*u);if(DB.c.tag)ital(DB.c.tag,10*u*X.f.bs,cx,Hp-m-4*u,sub,"center")}else foot(ink,sub,m)};coverFrame(c,Wp,Hp,u,d,CV.fr,hasQ,o.bold);coverIll(pg,d,o);pg.tb=tb;coverVerse(pg,d,o.digital,!!o.bold)}
+    if(ctr){const lw=drawLogo(c,cx-45*u,Hp-m-62*u,90*u,36*u,"ctr",{cap:1.6});{const tz=10*u*X.f.bs*TGK(),tL=DB.c.tag?tagL(X,DB.c.tag,tz,Wp-2*m):[],yb=Hp-m-4*u;labelC(c,DB.c.name.toUpperCase(),cx,tL.length?yb-(tL.length-1)*tz*1.18-tz*1.4:yb,X.lab(8*u),ink,2*u);tL.forEach((l,i)=>ital(l,tz,cx,yb-(tL.length-1-i)*tz*1.18,sub,"center"))}}else foot(ink,sub,m)};coverFrame(c,Wp,Hp,u,d,CV.fr,hasQ,o.bold);coverIll(pg,d,o);pg.tb=tb;coverVerse(pg,d,o.digital,!!o.bold)}
 /* section headings */
 function head(X,txt,al){if(al=="right"||(al=="center"&&X.design!="traditional"&&X.design!="arch"))return headA(X,txt,al);return headBase(X,txt)}
 function headA(X,txt,al){const sz=X.s,d=X.design,ctr=al=="center",place=(wd,w)=>ctr?(w-wd)/2:w-wd;
@@ -3123,7 +3152,7 @@ const fld=(label,path,o)=>{o=o||{};const v=getP(path);const id="f_"+path.replace
 const seg=(items,cur,act)=>`<div class="seg">${items.map(([v,l])=>`<button class="${v==cur?"on":""}" data-a="${act}" data-v="${v}">${l}</button>`).join("")}</div>`;
 function listEd(path,cols,addLbl,newItem){const arr=getP(path)||[];
   return `<div class="items">${arr.map((it,i)=>`<div class="it">${cols.map(c=>`<input data-i="${path}.${i}.${c[0]}" value="${esc(it[c[0]])}" placeholder="${esc(c[1])}" aria-label="${esc(c[1])}" class="${c[2]||""}">`).join("")}<button class="x" data-a="deli" data-v="${path}.${i}" aria-label="Remove">×</button></div>`).join("")}</div><button class="add" data-a="addi" data-v="${path}">+ ${addLbl}</button>`}
-function secSummary(s){if(s.k=="order")return s.items.filter(i=>i.l).length+" items";if(s.k=="sermon")return s.title||s.ref||"Not set";if(s.k=="announce"||s.k=="events")return s.items.length+" items";
+function secSummary(s){if(s.text)s={...s,text:s.text.replace(/\*\*/g,"")};if(s.k=="order")return s.items.filter(i=>i.l).length+" items";if(s.k=="sermon")return s.title||s.ref||"Not set";if(s.k=="announce"||s.k=="events")return s.items.length+" items";
   const t=(s.text||"").trim();return t?t.slice(0,48)+(t.length>48?"…":""):"Empty"}
 const ALS=[["","Same as bulletin"],["left","Left"],["center","Centered"],["right","Right"],["justify","Justified"]],alSel=(p,s)=>`<label class="fl"><span>Text alignment</span><select data-c="${p}.al">${ALS.map(a=>`<option value="${a[0]}" ${(s.al||"")==a[0]?"selected":""}>${a[1]}</option>`).join("")}</select></label>`;
 const TSO=[["","Same as bulletin"],["sm","Smaller"],["lg","Larger"],["xl","Largest"]],PSO=[["","Default size"],["s","Small photo"],["m","Medium photo"],["l","Large photo"],["f","Full width"]],tsSel=(p,s)=>`<label class="fl"><span>Text size</span><select data-c="${p}.ts">${TSO.map(a=>`<option value="${a[0]}" ${(s.ts||"")==a[0]?"selected":""}>${a[1]}</option>`).join("")}</select></label>`;
@@ -3136,7 +3165,7 @@ function secEditor(s,i,n){const p="w.secs."+i,op=S.open[s.id];let b="";
     if(s.k=="welcome"||s.k=="giving"||s.k=="connect")b=fld("Text",p+".text",{area:1,rows:4});
     else if(s.k=="custom")b=fld("Heading",p+".h")+fld("Text",p+".text",{area:1,rows:4});
     else if(s.k=="prayer")b=fld("One request per line",p+".text",{area:1,rows:5});
-    else if(s.k=="order")b=listEd(p+".items",[["l","Item"],["n","Note, like a hymn or reader","sm"]],"Add item");
+    else if(s.k=="order")b=`<div class="items">${s.items.map((it,j)=>{const q=p+".items."+j,lv=Math.max(0,Math.min(2,it.lv|0));return `<div class="it ord" data-lv="${lv}"><input data-i="${q}.l" value="${esc(it.l)}" placeholder="Item"><input class="sm" data-i="${q}.n" value="${esc(it.n)}" placeholder="Note, like a hymn or reader"><span class="lvl"><button data-a="lv" data-v="${q},-1" ${lv==0?"disabled":""} aria-label="Move out one level" title="Move out">◂</button><button data-a="lv" data-v="${q},1" ${lv==2?"disabled":""} aria-label="Indent under the item above" title="Indent">▸</button></span><button class="x" data-a="deli" data-v="${q}" aria-label="Remove">×</button></div>`}).join("")}</div><button class="add" data-a="addi" data-v="${p}.items">+ Add item</button><p class="hint">Use ▸ to indent an item under the one above it. Select text and tap <b>B</b> to bold it.</p>`;
     else if(s.k=="announce")b=`<div class="items">${s.items.map((it,j)=>`<div class="it col"><input data-i="${p}.items.${j}.h" value="${esc(it.h)}" placeholder="Headline"><textarea data-i="${p}.items.${j}.b" rows="2" placeholder="Details">${esc(it.b)}</textarea>${fxEd(p+".items."+j,it)}<button class="x" data-a="deli" data-v="${p}.items.${j}" aria-label="Remove">×</button></div>`).join("")}</div><button class="add" data-a="addi" data-v="${p}.items">+ Add announcement</button>`;
     else if(s.k=="events")b=`<div class="items">${s.items.map((it,j)=>`<div class="it col"><div class="two"><input data-i="${p}.items.${j}.d" value="${esc(it.d)}" placeholder="Date, like Sat, Nov 15"><input data-i="${p}.items.${j}.h" value="${esc(it.h)}" placeholder="Event"></div><input data-i="${p}.items.${j}.b" value="${esc(it.b)}" placeholder="Time and place">${fxEd(p+".items."+j,it)}<button class="x" data-a="deli" data-v="${p}.items.${j}" aria-label="Remove">×</button></div>`).join("")}</div><button class="add" data-a="addi" data-v="${p}.items">+ Add event</button><details class="pst"><summary>Paste a list of events</summary><textarea id="evpaste" rows="4" placeholder="One per line: Date - Event - Time and place\nSat, Nov 15 - Men’s breakfast - 8:00 AM, fellowship hall"></textarea><button class="add" data-a="pasteev" data-v="${p}.items">Add these events</button></details>`;
     else if(s.k=="sermon"){const ps=(s.ref||"").trim()?passage(s.ref):null;b=fld("Title",p+".title")+`<div class="two">${fld("Speaker",p+".speaker")}${fld("Series",p+".series")}</div>`+fld("Passage",p+".ref",{ph:"John 1:1-14"})+
@@ -3156,7 +3185,7 @@ function weekTab(){const w=W(),n=w.secs.length;
   <h3 class="h3">Sections</h3><div class="secs">${w.secs.map((s,i)=>secEditor(s,i,n)).join("")}</div>
   <button class="add big" data-a="addsec">+ Add a custom section</button>`}
 function churchTab(){const c=DB.c;
-  return `<div class="card">${fld("Church name","c.name")}${fld("Tagline","c.tag",{ph:"Optional"})}<div class="opt"><label class="chk"><input type="checkbox" data-c="c.btag" ${c.btag!==false?"checked":""}> Also show the tagline on the back page</label></div>${"" }
+  return `<div class="card">${fld("Church name","c.name")}${fld("Motto or tagline","c.tag",{ph:"Optional"})}<div class="hint" style="margin:6px 0 4px">Motto size</div>${seg([["sm","Small"],["m","Medium"],["l","Large"],["xl","Extra large"]],c.tsz||"m","tsz")}<div class="opt"><label class="chk"><input type="checkbox" data-c="c.btag" ${c.btag!==false?"checked":""}> Also show the motto on the back page</label></div>${"" }
   <div class="two">${fld("Address","c.addr")}${fld("Phone","c.phone")}</div><div class="two">${fld("Website","c.web")}${fld("Email","c.email")}</div><div class="opt"><label class="chk"><input type="checkbox" data-c="c.qr" ${c.qr!==false?"checked":""}> Show a QR code for the website</label></div>${c.qr!==false?`<div class="qrx${(c.qrs||[]).length>=2?" full":""}"><label class="fl" style="margin-bottom:6px"><span>More QR codes <small>up to two extra, such as giving or a connect card</small></span></label>${listEd("c.qrs",[["l","Label, e.g. Give online","sm"],["u","Web address"]],"Add a QR code")}<p class="hint">The website above is the first code. Each code prints with its label underneath.</p></div>`:""}</div>
   <h3 class="h3">Service times</h3><div class="card">${listEd("c.times",[["d","Day","sm"],["t","Time","sm"],["n","Service name"]],"Add time")}</div>
   <h3 class="h3">Logo</h3><div class="card logo">${c.logo?`<img src="${c.logo}" alt="Church logo">`:`<div class="nologo">No logo</div>`}<div class="row"><label class="btn ghost file">${c.logo?"Replace logo":"Add logo"}<input type="file" accept="image/*" data-c="logo"></label>${c.logo?`<button class="btn ghost" data-a="nologo">Remove</button>`:""}</div>${c.logo?`<label class="lsz">Logo size <input type="range" min="0.5" max="2.4" step="0.1" value="${parseFloat(c.ls)||1}" data-i="c.ls"></label>`:""}<p class="hint">A transparent PNG works best. The website address also becomes the QR code on the back of the booklet.</p></div>
@@ -3199,6 +3228,21 @@ document.addEventListener("keydown",e=>{const g=e.target.closest&&e.target.close
   const kids=dndKids(T.box),i=kids.indexOf(row),j=i+(e.key=="ArrowUp"?-1:1);if(j<0||j>=kids.length)return;[T.arr[i],T.arr[j]]=[T.arr[j],T.arr[i]];persist();render(true);
   const isS=T.box.classList.contains("secs");let pth="";if(!isS){const q=row.querySelector(".x[data-a=deli]").dataset.v.split(".");q.pop();pth=q.join(".")}
   setTimeout(()=>{let r;if(isS)r=document.querySelectorAll(".secs>.sec")[j];else r=[...document.querySelectorAll(".items>.it")].find(z=>{const x=z.querySelector(".x[data-a=deli]");return x&&x.dataset.v==pth+"."+j});const gg=r&&r.querySelector(".grip");if(gg)gg.focus()},30)});
+/* ---------- bold: select text, tap B (or Ctrl/Cmd+B). Stored as **bold** ---------- */
+const BOLDOK=t=>t&&t.dataset&&(t.tagName=="TEXTAREA"||(t.tagName=="INPUT"&&(t.type=="text"||!t.type)))&&/^w\.secs\.\d+\.(text|items\.\d+\.(l|h|b))$/.test(t.dataset.i||"");
+function boldIt(t){const v=t.value;let a=t.selectionStart,b=t.selectionEnd;if(a==b){a=0;b=v.length}if(a==b)return;
+  let nv,s0,s1;if(v.slice(a-2,a)=="**"&&v.slice(b,b+2)=="**"){nv=v.slice(0,a-2)+v.slice(a,b)+v.slice(b+2);s0=a-2;s1=b-2}
+  else{const sel=v.slice(a,b);if(sel.length>4&&sel.startsWith("**")&&sel.endsWith("**")){nv=v.slice(0,a)+sel.slice(2,-2)+v.slice(b);s0=a;s1=b-4}else{nv=v.slice(0,a)+"**"+sel+"**"+v.slice(b);s0=a+2;s1=b+2}}
+  t.value=nv;t.setSelectionRange(s0,s1);t.dispatchEvent(new Event("input",{bubbles:true}))}
+const bbar=document.createElement("button");bbar.id="bbar";bbar.type="button";bbar.innerHTML="<b>B</b>";bbar.title="Bold (Ctrl+B)";bbar.setAttribute("aria-label","Bold selected text");document.body.appendChild(bbar);
+let bT=null;
+function bPlace(){if(!bT||!document.body.contains(bT)){bbar.classList.remove("show");return}const r=bT.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight){bbar.classList.remove("show");return}bbar.style.left=Math.min(innerWidth-40,r.right-34)+"px";bbar.style.top=Math.max(4,r.top-34)+"px";bbar.classList.add("show")}
+document.addEventListener("focusin",e=>{if(BOLDOK(e.target)){bT=e.target;bPlace()}});
+document.addEventListener("focusout",e=>{if(e.target===bT)setTimeout(()=>{if(document.activeElement!==bT){bT=null;bbar.classList.remove("show")}},120)});
+bbar.addEventListener("pointerdown",e=>{e.preventDefault()});
+bbar.addEventListener("click",()=>{if(bT){boldIt(bT);bT.focus()}});
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&(e.key=="b"||e.key=="B")&&BOLDOK(e.target)){e.preventDefault();boldIt(e.target)}});
+addEventListener("scroll",bPlace,true);addEventListener("resize",bPlace);
 function lookTab(){const l=DB.l,sl=l.design=="editorial"||l.design=="minimal",sg=seasonFor(W().date),ss=SEASONS.find(x=>x.k==sg),light=l.design=="poster"||l.design=="card",artOK=l.design!="traditional"&&(!sl||l.cover=="bold");
   const seasons=`<h3 class="h3 first">Seasons</h3><div class="card">${ss?`<p class="hint" style="margin:0 0 10px">This Sunday falls in <b>${ss.n}</b>.${l.pack==ss.k?"":` <button class="btn ghost sm" data-a="pack" data-v="${ss.k}">Use the ${ss.n} look</button>`}</p>`:`<p class="hint" style="margin:0 0 10px">One tap sets the design, color, typefaces, art and illustration for a season.</p>`}<div class="seas">${SEASONS.map(x=>`<button class="scard ${l.pack==x.k?"on":""}" data-a="pack" data-v="${x.k}" aria-pressed="${l.pack==x.k}"><i style="background:${x.acc}"></i><b>${x.n}</b><small>${x.d}</small></button>`).join("")}</div>${l.pack?`<button class="btn ghost sm" data-a="pack" data-v="" style="margin-top:10px">Clear season look</button>`:""}</div>`;
   const artH=artOK?`<h3 class="h3">Cover art</h3><div class="card"><div class="artg">${ART.map(a=>`<button class="acard ${l.art==a[0]?"on":""}" data-a="art" data-v="${a[0]}" aria-pressed="${l.art==a[0]}"><canvas data-art="${a[0]}" width="132" height="176"></canvas><small>${a[1]}</small></button>`).join("")}</div><div class="row" style="margin:10px 0 0"><button class="btn ghost sm" data-a="shuf">Shuffle art</button></div><p class="hint" style="margin-top:8px">The art is drawn fresh from your accent color, and it changes every week. Shuffle until you like it.</p></div>`:"";
@@ -3266,7 +3310,7 @@ async function fillOv(){const i=S.ov;await loadFonts();const R=build(DB.l.layout
 /* ---------- actions ---------- */
 A.tab=v=>{S.more=false;S.tab=v;S.del=false;render();window.scrollTo(0,0)};
 A.lay=v=>{DB.l.layout=v;persist();render(true)};A.pst=v=>{DB.l.pstyle=v;persist();render(true)};
-A.aln=v=>{DB.l.align=v;persist();render(true)};A.ps=v=>{DB.l.ps=v;persist();render(true)};A.sz=v=>{DB.l.size=v;persist();render(true)};A.cov=v=>{DB.l.cover=v;persist();render(true)};A.fnt=async v=>{DB.l.font=v;persist();render(true);if(v=="custom"){await ensureCustom();render(true)}};
+A.aln=v=>{DB.l.align=v;persist();render(true)};A.tsz=v=>{DB.c.tsz=v;persist();render(true)};A.ps=v=>{DB.l.ps=v;persist();render(true)};A.sz=v=>{DB.l.size=v;persist();render(true)};A.cov=v=>{DB.l.cover=v;persist();render(true)};A.fnt=async v=>{DB.l.font=v;persist();render(true);if(v=="custom"){await ensureCustom();render(true)}};
 A.cfds=v=>{DB.l.cf.ds=+v;persist();render(true)};A.cfbs=v=>{DB.l.cf.bs=+v;persist();render(true)};
 A.gfadd=async()=>{const el=$("gfin"),fam=cleanFam(el&&el.value);if(!fam)return;const role=$("gfrole").value;toast("Looking for “"+fam+"”…",4000);const ok=await gfLoad(fam);if(!ok){toast("Couldn’t load “"+fam+"” from Google Fonts. Check the spelling and your connection.",4500);return}
   if(!GF.some(g=>g[1].includes(fam))&&!(DB.l.gf||[]).includes(fam)){DB.l.gf=(DB.l.gf||[]).concat(fam)}DB.l.cf[role]=fam;DB.l.font="custom";persist();render(true);toast("Added “"+fam+"”")};
@@ -3285,7 +3329,8 @@ A.mv=v=>{const[i,d]=v.split(",").map(Number),a=W().secs,j=i+d;if(j<0||j>=a.lengt
 A.delsec=v=>{const w=W();w.secs=w.secs.filter(s=>s.id!=v);persist();render(true)};
 A.addsec=()=>{const s=newSec("custom");W().secs.push(s);S.open[s.id]=true;persist();render(true)};
 const NEWI={order:{l:"",n:""},announce:{h:"",b:""},events:{d:"",h:"",b:""},times:{d:"",t:"",n:""},qrs:{l:"",u:""}};
-A.addi=v=>{const arr=getP(v),p=v.split("."),k=p[0]=="c"?p[1]:W().secs[+p[2]].k;if(k=="qrs"&&arr.length>=2)return;arr.push(Object.assign({},NEWI[k]));persist();render(true);setTimeout(()=>{const l=document.querySelectorAll('[data-i^="'+v+'."]');const t=l[l.length-(k=="events"?3:k=="announce"?2:k=="times"?3:2)];if(t)t.focus()},30)};
+A.lv=v=>{const q=v.split(","),it=getP(q[0]);if(!it)return;it.lv=Math.max(0,Math.min(2,(it.lv|0)+(+q[1])));persist();render(true)};
+A.addi=v=>{const arr=getP(v),p=v.split("."),k=p[0]=="c"?p[1]:W().secs[+p[2]].k;if(k=="qrs"&&arr.length>=2)return;{const ni=Object.assign({},NEWI[k]);if(k=="order"&&arr.length&&(arr[arr.length-1].lv|0)>0)ni.lv=arr[arr.length-1].lv|0;arr.push(ni)}persist();render(true);setTimeout(()=>{const l=document.querySelectorAll('[data-i^="'+v+'."]');const t=l[l.length-(k=="events"?3:k=="announce"?2:k=="times"?3:2)];if(t)t.focus()},30)};
 A.deli=v=>{const p=v.split("."),i=+p.pop(),arr=getP(p.join("."));arr.splice(i,1);persist();render(true)};
 A.newwk=()=>{const w=W(),n=JSON.parse(JSON.stringify(w));n.id=uid();n.date=addDays(w.date,7);n.theme="";n.secs.forEach(s=>{s.id=uid();if(s.k=="events"){const y=+n.date.slice(0,4),t0=Date.parse(n.date+"T00:00:00");s.items=s.items.filter(it=>{const d=Date.parse((it.d||"").replace(/^[A-Za-z]{3,9},?\s+(?=[A-Za-z])/,"")+" "+y);return isNaN(d)||d>=t0})}if(s.k=="sermon"){s.title="";s.ref="";s.speaker=s.speaker}if(s.k=="prayer")s.text=""});DB.weeks.push(n);DB.cur=n.id;persist();render();window.scrollTo(0,0);toast("New week ready")};
 A.pasteev=v=>{const ta=document.getElementById("evpaste");if(!ta||!ta.value.trim())return;const arr=getP(v);ta.value.split(/\n+/).map(l=>l.trim()).filter(Boolean).forEach(l=>{const q=l.split(/\s+[-–—|]\s+/);if(q.length==1)arr.push({d:"",h:q[0],b:""});else arr.push({d:q[0],h:q[1]||"",b:q.slice(2).join(" · ")})});persist();render(true);toast("Events added")};
@@ -3368,7 +3413,7 @@ A.print=async()=>{await loadFonts();const R=build(DB.l.layout,2.6),sh=sheets(R),
 function textOut(){const w=W(),c=DB.c,o=[];o.push(c.name);o.push(longDate(w.date));if((w.theme||"").trim())o.push(w.theme.trim());o.push("");
   w.secs.filter(s=>s.on).forEach(s=>{const R=[];
     if(s.k=="welcome"&&s.text.trim())R.push("WELCOME",s.text.trim());
-    else if(s.k=="order"&&s.items.some(i=>i.l))R.push("ORDER OF SERVICE",...s.items.filter(i=>i.l).map(i=>"• "+i.l+(i.n?" — "+i.n:"")));
+    else if(s.k=="order"&&s.items.some(i=>i.l))R.push("ORDER OF SERVICE",...s.items.filter(i=>i.l).map(i=>"  ".repeat(Math.max(0,Math.min(2,i.lv|0)))+"• "+i.l.replace(/\*\*/g,"")+(i.n?" — "+i.n:"")));
     else if(s.k=="sermon"&&(s.title||s.ref)){R.push("SERMON");if(s.title)R.push(s.title);const sub=[s.speaker,s.series].filter(Boolean).join(" · ");if(sub)R.push(sub);const p=passage(s.ref);if(p)R.push(p.ref+" (BSB)");else if(s.ref)R.push(s.ref)}
     else if(s.k=="announce"&&s.items.length)R.push("ANNOUNCEMENTS",...s.items.map(i=>"• "+[i.h,i.b].filter(Boolean).join(": ")));
     else if(s.k=="events"&&s.items.length)R.push("COMING UP",...s.items.map(i=>"• "+[i.d,i.h,i.b].filter(Boolean).join(" — ")));
@@ -3390,7 +3435,7 @@ const HELP=`<h2>Orderly help</h2>
 <h4>Make a bulletin in five steps</h4><ol><li><b>Church</b> tab: add your church name, address, service times, website and logo once. They carry into every bulletin.</li><li><b>This week</b> tab: set the date, theme and sermon, then fill in the order of service, announcements and events.</li><li><b>Look</b> tab: pick a design, your primary and accent colors, and fonts. Choose a layout: booklet, tri-fold, letter page or digital slides.</li><li><b>Preview</b>: check every page. Look over each page, especially the date and any empty sections.</li><li><b>Download PDF</b> and print, or save the slides for the screen.</li></ol>
 <h4>Every week</h4><p>Use <b>New week</b> in This week. It copies the current bulletin forward, moves the date a week ahead, clears the sermon, theme and prayer requests, and drops events that have passed. In Events, <b>Paste a list of events</b> adds several at once, one per line: <i>Sat, Nov 15 - Men’s breakfast - 8:00 AM</i>.</p>
 <h4>Printing</h4><ul><li><b>Booklet</b>: print the PDF double-sided on letter paper, landscape, <b>flip on the short edge</b>, then fold in half. No page is split across pages, and the sermon always gets its own page.</li><li><b>Tri-fold</b>: print double-sided on letter paper, landscape, flip on the short edge, then fold in thirds.</li><li><b>Letter page</b>: a normal one-sided or two-sided page.</li><li><b>Digital slides</b>: save the images and post them or show them on a screen.</li><li>Print at 100% (“actual size”), not “fit to page”. Bold color covers print edge to edge, so they suit a print shop.</li><li><b>For a print shop</b>: tick <b>Add crop marks and bleed to the PDF</b> under the download buttons. It adds 1/8 inch of bleed plus crop and fold marks, and each sheet grows by 1 inch, so print on tabloid (11 × 17) or larger and trim.</li></ul>
-<h4>Tips</h4><ul><li>A photo-capable design (Photo, Bold, Cross, Arch) can use your own photo on the cover and as a banner inside. Portrait or square photos work best.</li><li><b>Large print</b> is in Look, Text size. Long bulletins may shrink slightly to fit.</li><li>Bulletin language changes headings and dates (Spanish, French, Portuguese, German). Scripture from the built-in Bible stays English.</li><li>The website address becomes the QR code on the back. Turn it off in Church if you don’t want it.</li></ul>
+<h4>Tips</h4><ul><li>A photo-capable design (Photo, Bold, Cross, Arch) can use your own photo on the cover and as a banner inside. Portrait or square photos work best.</li><li><b>Bold</b> any text: select it in This week and tap <b>B</b> (or press Ctrl/Cmd+B). <b>Indent</b> items in the order of service with ▸ to build an outline.</li><li><b>Large print</b> is in Look, Text size. Long bulletins may shrink slightly to fit.</li><li>Bulletin language changes headings and dates (Spanish, French, Portuguese, German). Scripture from the built-in Bible stays English.</li><li>The website address becomes the QR code on the back. Turn it off in Church if you don’t want it.</li></ul>
 <h4>Your data</h4><p>Everything stays in this browser on this device. Nothing is uploaded and there are no accounts. If you clear your browser data or switch computers, you’ll lose it unless you save a backup, so use <b>Download backup</b> now and then and <b>Restore backup</b> on the other computer.</p>
 <h4>Fonts, songs and photos</h4><p>The Bible text is the public-domain Berean Standard Bible. Song lyrics and photos aren’t included. Make sure you have the right to print what you add, for example a CCLI license for lyrics.</p>`;
 

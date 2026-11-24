@@ -78,12 +78,28 @@ function wrapT(t,font,w){sc.font=font;const out=[];String(t||"").split("\n").for
   while(out.length&&out[out.length-1]==="")out.pop();return out}
 const mw=(t,font)=>{sc.font=font;return sc.measureText(t).width};
 function fit1(t,font,w){if(mw(t,font)<=w)return t;let s=t;while(s.length>1&&mw(s+"…",font)>w)s=s.slice(0,-1);return s.trimEnd()+"…"}
+const stripB=t=>String(t||"").replace(/\*\*/g,"");
+function bfont(f){return /\b[1-9]00\b/.test(f)?f.replace(/\b[1-9]00\b/,"700"):"bold "+f}
+function runsOf(p){const parts=String(p).split("**"),words=[];let cur=null,b=false;
+  parts.forEach((seg,si)=>{if(si>0)b=!b;const re=/(\s+)|(\S+)/g;let m;while((m=re.exec(seg))){if(m[1])cur=null;else{if(!cur){cur=[];words.push(cur)}cur.push({t:m[2],b})}}});return words}
+function richRows(t,o){const f=o.font,bf=bfont(f),sp=mw(" ",f),W=o.w-(o.ind||0),jf=o.align=="justify",rows=[],wW=w=>w.reduce((a,r)=>a+mw(r.t,r.b?bf:f),0);
+  String(t||"").split("\n").forEach(p=>{if(!p.trim()){rows.push({h:o.lh*.5,blank:true,draw(){}});return}
+    const ws=runsOf(p).map(w=>({w,wd:wW(w)})),lines=[];let cur=[],x=0;
+    ws.forEach(q=>{const nx=cur.length?x+sp+q.wd:q.wd;if(cur.length&&nx>W){lines.push(cur);cur=[q];x=q.wd}else{cur.push(q);x=nx}});if(cur.length)lines.push(cur);
+    lines.forEach((L,li)=>{const sw=L.reduce((a,q)=>a+q.wd,0),tw=sw+sp*(L.length-1),last=li==lines.length-1;
+      rows.push({h:o.lh,draw(c,x0,y,w){const ww=w-(o.ind||0),by=y+o.lh*.5+o.size*.32;c.textBaseline="alphabetic";c.textAlign="left";c.fillStyle=o.color;
+        let gp=sp,off=0;if(jf&&!last&&L.length>1){const g=(ww-sw)/(L.length-1);if(g<=sp*3.2)gp=g}else if(o.align=="center")off=(ww-tw)/2;else if(o.align=="right")off=ww-tw;
+        let px=x0+(o.ind||0)+off;L.forEach(q=>{q.w.forEach(r=>{const ff=r.b?bf:f;c.font=ff;c.fillText(r.t,px,by);px+=mw(r.t,ff)});px+=gp})}})})});
+  while(rows.length&&rows[rows.length-1].blank)rows.pop();return rows}
+const richSegs=raw=>String(raw).split("**").map((t,i)=>({t,b:i%2==1})).filter(r=>r.t),richW=(sg,f,bf)=>sg.reduce((a,r)=>a+mw(r.t,r.b?bf:f),0);
+function richDraw(c,sg,x,y,f,bf){sg.forEach(r=>{const ff=r.b?bf:f;c.font=ff;c.fillText(r.t,x,y);x+=mw(r.t,ff)})}
+const TGK=()=>({sm:.85,m:1,l:1.3,xl:1.6}[DB.c.tsz||"m"]||1);
 
 function ctxOf(L){ // style context for rows
   const f=fontSet(L.font),base=L.s;return{f,s:base,bs:base*f.bs,ds:f.ds,acc:L.accent,hi:HT(L.hi||L.accent),design:L.design,
     body:(sz,wt,it)=>fnt(wt||400,sz,f.b,it),disp:sz=>fnt(f.d[1],sz,f.d),lab:sz=>fnt(f.l[1],sz,f.l)}}
 
-function T(t,o){const jf=o.align=="justify";let lines;
+function T(t,o){if(String(t||"").indexOf("**")>=0)return richRows(t,o);const jf=o.align=="justify";let lines;
   if(jf){lines=[];String(t||"").split("\n").forEach(p=>{if(!p.trim()){lines.push({t:"",last:1});return}const L=wrapT(p,o.font,o.w-(o.ind||0));L.forEach((l,i)=>lines.push({t:l,last:i==L.length-1}))});while(lines.length&&lines[lines.length-1].t==="")lines.pop()}
   else lines=wrapT(t,o.font,o.w-(o.ind||0)).map(l=>({t:l}));
   return lines.map(L=>L.t===""?{h:o.lh*.5,blank:true,draw(){}}:{h:o.lh,draw(c,x,y,w){c.font=o.font;c.fillStyle=o.color;c.textBaseline="alphabetic";const by=y+o.lh*.5+o.size*.32,ww=w-(o.ind||0);
@@ -126,11 +142,13 @@ function secRows(X,sec,w,wk){const s=X.bs*(TSM[sec.ts]||1),lh=s*1.42,R=[];const 
   const FX=sec.box||(sec.img&&imgOf(sec.img)),fxw=(rowsFn)=>featBlock(X,w,{s,is:sec.is,mk:rowsFn,img:sec.img,ip:sec.ip,box:sec.box});
   if(sec.k=="welcome"){if(!sec.text.trim())return R;if(FX)R.push(head(X,tr("welcome"),al),...fxw(tw=>para(sec.text,{w:tw})));else R.push(head(X,tr("welcome"),al),...para(sec.text),gap(s*.5))}
   else if(sec.k=="order"){const it=sec.items.filter(i=>(i.l||"").trim());if(!it.length)return R;R.push(head(X,tr("order"),al));
-    it.forEach(i=>R.push({h:lh*1.08,draw(c,x,y,w){const bl=y+lh*.5+s*.32,nf=X.body(s*.95,400,true),nt=(i.n||"").trim(),nw=nt?mw(nt,nf):0,lf=fit1(i.l.trim(),body,w-nw-(nt?16:0));
-      c.textBaseline="alphabetic";c.textAlign="left";c.font=body;c.fillStyle=INK;
-      if(al=="center"||al=="right"){const lt=i.l.trim(),sep="  ·  ",tot=mw(lt,body)+(nt?mw(sep,body)+nw:0);if(tot<=w){let px=al=="center"?x+(w-tot)/2:x+w-tot;c.fillText(lt,px,bl);if(nt){px+=mw(lt,body);c.fillStyle=mute;c.fillText(sep,px,bl);px+=mw(sep,body);c.font=nf;c.fillText(nt,px,bl)}return}}
-      c.fillText(lf,x,bl);
-      if(nt){c.font=nf;c.fillStyle=mute;c.textAlign="right";c.fillText(nt,x+w,bl);const lw=mw(lf,body);c.save();c.strokeStyle="#b9bec8";c.lineWidth=.7;c.setLineDash([.5,2.6]);c.beginPath();c.moveTo(x+lw+6,bl-1);c.lineTo(x+w-nw-6,bl-1);c.stroke();c.restore()}}}));R.push(gap(s*.5))}
+    it.forEach(i=>{const lv=Math.max(0,Math.min(2,i.lv|0)),ind=lv*s*1.6,sz=lv==2?s*.93:lv==1?s*.97:s,lf0=X.body(sz),bf0=X.body(sz,700),col=lv==2?mute:INK;
+      R.push({h:lh*1.08,draw(c,x,y,w){x+=ind;w-=ind;const bl=y+lh*.5+s*.32,nf=X.body(sz*.95,400,true),nt=stripB(i.n||"").trim(),nw=nt?mw(nt,nf):0,raw=(i.l||"").trim(),pl=stripB(raw),lf=fit1(pl,lf0,w-nw-(nt?16:0)),sg=(raw.indexOf("**")>=0&&lf===pl)?richSegs(raw):[{t:lf,b:false}],lw=richW(sg,lf0,bf0);
+        c.textBaseline="alphabetic";c.textAlign="left";c.fillStyle=col;
+        if(al=="center"||al=="right"){const sep="  ·  ",tot=lw+(nt?mw(sep,lf0)+nw:0);if(tot<=w){let px=al=="center"?x+(w-tot)/2:x+w-tot;richDraw(c,sg,px,bl,lf0,bf0);if(nt){px+=lw;c.fillStyle=mute;c.font=lf0;c.fillText(sep,px,bl);px+=mw(sep,lf0);c.font=nf;c.fillText(nt,px,bl)}return}}
+        if(lv){c.save();c.fillStyle=mute;c.beginPath();c.arc(x-s*.7,bl-s*.3,s*.12,0,6.29);c.fill();c.restore();c.fillStyle=col}
+        richDraw(c,sg,x,bl,lf0,bf0);
+        if(nt){c.font=nf;c.fillStyle=mute;c.textAlign="right";c.fillText(nt,x+w,bl);c.save();c.strokeStyle="#b9bec8";c.lineWidth=.7;c.setLineDash([.5,2.6]);c.beginPath();c.moveTo(x+lw+6,bl-1);c.lineTo(x+w-nw-6,bl-1);c.stroke();c.restore()}}})});R.push(gap(s*.5))}
   else if(sec.k=="sermon"){const hasAny=sec.title||sec.ref||sec.speaker||sec.series;if(!hasAny)return R;R.push(head(X,tr("sermon"),al));
     const kp=a=>{a.forEach(r=>r.keep=true);return a};
     if(sec.title)R.push(...kp(T(sec.title,{font:X.disp(s*1.75*X.ds),color:INK,size:s*1.75*X.ds,lh:s*1.75*X.ds*1.15,w,align:al2})));
@@ -190,7 +208,7 @@ function drawBack(pg,wk,s,warn,pre){const c=pg.c,Wp=pg.W,Hp=pg.H,nar=Wp<300,m=na
   const tl=timesList(),blockH=nar?148:150;
   const rows=pre?pre.slice():[];if(!pre)backSecs(wk).forEach(sec=>rows.push(...secRows(X,sec,w,wk)));
   let used=0;const r=flow(rows,()=>used++?null:{c,x:m,y:m,w,h:Hp-2*m-blockH-10});if(r)warn.push(r);
-  {const top=m+hOf(rows),free=Hp-m-blockH-2-top,tg=(DB.c.tag||"").trim();if(!r&&tg&&DB.c.btag!==false&&free>(nar?120:130)){const sz=(nar?12.5:15)*X.f.bs,f=X.body(sz,400,true);c.font=f;const ls=wrapT(tg,f,w*(nar?.9:.78)),lh=sz*1.4,bh=20+ls.length*lh,y0=top+(free-bh)*.5+4;ornament(c,Wp/2,y0,nar?30:40,DB.l.accent,.8);c.textAlign="center";c.fillStyle=MUTE;c.textBaseline="alphabetic";ls.forEach((l,i)=>c.fillText(l,Wp/2,y0+22+i*lh));c.textAlign="left"}}
+  {const top=m+hOf(rows),free=Hp-m-blockH-2-top,tg=(DB.c.tag||"").trim();if(!r&&tg&&DB.c.btag!==false&&free>(nar?120:130)){const sz=(nar?12.5:15)*X.f.bs*TGK(),f=X.body(sz,400,true);c.font=f;const ls=wrapT(tg,f,w*(nar?.9:.78)),lh=sz*1.4,bh=20+ls.length*lh,y0=top+(free-bh)*.5+4;ornament(c,Wp/2,y0,nar?30:40,DB.l.accent,.8);c.textAlign="center";c.fillStyle=MUTE;c.textBaseline="alphabetic";ls.forEach((l,i)=>c.fillText(l,Wp/2,y0+22+i*lh));c.textAlign="left"}}
   // info block
   const by=Hp-m-blockH+6;c.strokeStyle=RULE;c.lineWidth=.6;c.beginPath();c.moveTo(m,by-8);c.lineTo(Wp-m,by-8);c.stroke();
   const QL=qrLinks(),qn=QL.length,showQ=qn>0,qg=8,qs=qn?Math.min(nar?64:86,Math.floor(((nar?(qn>1?.62:.5):.4)*w-qg*(qn-1))/qn)):0,tw=w-(showQ?qrW(qn,qs,qg)+20:0);let ix=m;
